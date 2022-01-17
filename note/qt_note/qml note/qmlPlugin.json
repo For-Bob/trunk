@@ -1,0 +1,12 @@
+1.新建插件
+		qtcreator->新建项目或者文件->library(项目选择)-> Qt Quick 2 EXtension Plugin->名称(就是生成的库文件和项目文件夹)->选择编译工具
+		----->1.Object class-name:(生成的cpp类的名字)；2.URI(就是需要import的名称和文件夹，首字母最好大写):MouduleName->直到完成
+		如果需要在工程里面添加QML文件，就普通添加QML文件就好，然后打开qmldir文件，在下面一行添加Name 1.0 Name.qml
+	2.使用插件	
+		新建一个qml工程，添加几个地方，
+		1.pro(工程文件)QML_IMPORT_PATH = $$PWD/..(qml插件的上级目录)，
+		2.QQmlApplicationEngine engine;
+		engine.addImportPath("../");//插件的上级目录，load之前哈
+		3.qml文件里，import MouduleName 1.0
+	3.在使用工程上级新建文件夹MouduleName，但是这个需要把生成的库文件(*.dll)，qmldir文件和qml文件，复制到module这个文件夹下面
+	4.运行就好了

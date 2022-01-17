@@ -1,0 +1,78 @@
+qmldir一共有两种不同类型的qmldir文件
+	1.QML文档目录列表文件
+	2.QML模块定义文件
+格式说明：
+	格式											用法和说明	
+	module<MoudleIdenrifier>						声明标识符模块，module<MoudleIdenrifier>是（URI点式表示法）标识符模块必须匹配模块的安装路径
+													模块标识符指令必须是文件的第一行，一个模块标识符应该是在qmldir文件中
+													---注意一点：其实就是要用的模块 import用的，但是这个需要把生成的库文件(*.dll)，qmldir文件和qml文件，复制到module这个文件夹下面(没有的话需要新建)
+--------------------											
+	这里把新建qml插件的方法和使用的方法一起讲解了吧
+	1.新建插件
+		qtcreator->新建项目或者文件->library(项目选择)-> Qt Quick 2 EXtension Plugin->名称(就是生成的库文件和项目文件夹)->选择编译工具
+		----->1.Object class-name:(生成的cpp类的名字)；2.URI(就是需要import的名称和文件夹，首字母最好大写):MouduleName->直到完成
+		如果需要在工程里面添加QML文件，就普通添加QML文件就好，然后打开qmldir文件，在下面一行添加Name 1.0 Name.qml
+	2.使用插件	
+		新建一个qml工程，添加几个地方，
+		1.pro(工程文件)QML_IMPORT_PATH = $$PWD/..(qml插件的上级目录)，
+		2.QQmlApplicationEngine engine;
+		engine.addImportPath("../");//插件的上级目录，load之前哈
+		3.qml文件里，import MouduleName 1.0
+	3.在使用工程上级新建文件夹MouduleName，但是这个需要把生成的库文件(*.dll)，qmldir文件和qml文件，复制到module这个文件夹下面
+	4.运行就好了
+		
+	[singleton] <TypeName> <InitialVersion> <File>	声明模块可用的QML对象
+													[singleton]：用于声明一个单例类型
+													[TypeName]:有效的类型
+													[InitialVersion]模块版本号
+													[File]QML文件名
+			例子：
+				//Style.qml with custom singleton type definition
+				pragma Singleton
+				import QtQuick 2.0
+
+				QtObject {
+					property int textSize: 20
+					property color textColor: "green"
+				}
+
+				// qmldir declaring the singleton type
+				module CustomStyles
+				singleton Style 1.0 Style.qml
+
+				// singleton type in use
+				import QtQuick 2.0
+				import CustomStyles 1.0
+
+				Text {
+					font.pixelSize: Style.textSize
+					color: Style.textColor
+					text: "Hello World"
+				}
+			0个或者几个对象可以定义在qmldir文件中，每个对象类型必须是独一无二的类型名字，声明单例类型，必须包含pragma Singleton语句。
+	
+	internal <TypeName> <File>						声明一个模块内的对象，
+													例子：internal MyPrivateType MyPrivateType.qml
+	
+	<ResourceIdentifier> <InitialVersion> <File>	声明一个JavaScript 文件，
+	
+	plugin <Name> [<Path>]							声明插件
+													<Name>插件名字(库)，这个跟库的文件名不同。要依赖平台，库MyAppTypes 在Linux上生成libMyAppTypes.so，windows上生成MyAppTypes.dll。
+													<Path>(可选的)
+													plugin文件包含的绝对路径
+													从包含qmldir文件的目录到包含插件文件的目录的相对路径。
+													例子：
+														plugin MyPluginLibrary
+														
+	classname <C++ plugin class>					c++插件名字，所有的QML模块依赖C++插件的附加功能。
+
+	typeinfo <File>									声明一种文件描述用于像Qt Creator可以读取的插件模块文件，<File>是.qmltypes的文件
+													例子：	
+														typeinfo mymodule.qmltypes
+														
+	depends <ModuleIdentifier> <InitialVersion>		声明模块依赖另一个模块
+													例子：
+														depends MyOtherModule 1.0
+														
+	#<Comment>										#注释
+									

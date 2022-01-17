@@ -1,0 +1,40 @@
+{connect
+	一般写法：
+		connect(mUpTimer,                   SIGNAL(timeout()), this,        SLOT(onUpOut()));
+	智能指针写法
+		QScopedPointer<QTimer>            mUpTimer;
+		mUpTimer =new QTimer(this)；
+		connect(mUpTimer.data(),                   SIGNAL(timeout()), this,        SLOT(onUpOut()));
+	lambda表达式
+		connect(mUpTimer,                   &QTimer::timeout, this,        [this](){
+			CModeManager::instance()->volUp();
+		});
+	
+} 
+
+QString{
+	{QString与int的互相转换
+		QString转int
+
+		QString a("123");
+		int b = a.toInt();
+		qDebug() << b;
+		1
+		2
+		3
+		输出结果：123 
+		注意：如果字符串非纯数字，最终转换int的结果为0
+
+		int转QString
+
+		int c = 123;
+		QString d = QString::number(c);
+		qDebug() << d;
+		1
+		2
+		3
+		输出结果："123"
+	}
+	
+	Qt.rgba(qreal r, qreal g, qreal b, qreal a = 1.0)
+}

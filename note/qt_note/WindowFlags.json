@@ -1,0 +1,47 @@
+例子说明：	
+	Widget w1;
+	w1.setGeometry(220, 30, 200, 200);
+	w1.move(300, 300);
+	w1.setWindowFlags(Qt::WindowCloseButtonHint);
+	w1.show();
+
+{属性说明
+	Qt::WindowContextHelpButtonHint				//?,x，像对话框一样，有个问号和关闭按钮，关闭按钮不可用
+	Qt::Sheet									//?,x  像对话框一样，有个问号和关闭按钮, 都可以用，
+	
+	Qt::WindowCloseButtonHint 					//x，只有一个关闭按钮
+	Qt::Drawer									//x，只有一个关闭按钮
+	Qt::WindowTitleHint							//x，窗口只有一个关闭按钮，关闭按钮不可用
+	Qt::WindowSystemMenuHint					//x，只有一个关闭按钮，关闭按钮不可用
+	Qt::Tool									//x，有一个小小的关闭按钮
+
+	Qt::WindowMaximizeButtonHint				//一，口，x，最大化可用，最小化和关闭按钮不可用
+	Qt::WindowMinimizeButtonHint				//一，口，x，最小化可用，最大化和关闭按钮不可用
+	Qt::MSWindowsFixedSizeDialogHint			//一，口，x，最大化不可用
+	Qt::WindowMinMaxButtonsHint					//一，口，x，关闭不可用
+	
+	Qt::MSWindowsOwnDC							//一，口，x，都可以用
+	Qt::BypassWindowManagerHint					//一，口，x，都可以用
+	Qt::X11BypassWindowManagerHint				//一，口，x，都可以用
+	Qt::NoDropShadowWindowHint					//一，口，x，都可以用
+	Qt::MacWindowToolBarButtonHint				//一，口，x，都可以用
+	Qt::WindowFullscreenButtonHint				//一，口，x，都可以用
+	Qt::BypassGraphicsProxyWidget				//一，口，x，都可以用
+	Qt::WindowShadeButtonHint					//一，口，x，都可以用
+	Qt::WindowOverridesSystemGestures			//一，口，x，都可以用
+	Qt::MaximizeUsingFullscreenGeometryHint		//一，口，x，都可以用	
+	Qt::WindowDoesNotAcceptFocus				//一，口，x，都可以用,中间的内容点击事件不可用												
+	Qt::WindowStaysOnTopHint					//一，口，x，都可以用，一直在最上面
+	Qt::WindowStaysOnBottomHint					//一，口，x，都可以用，一直在最下面
+	Qt::WindowTransparentForInput				//一，口，x，都不能用，界面上面的任何东西都点击不了，事件完全透下去了
+	
+	Qt::SubWindow								//窗口没有按钮但是有标题栏 任务里什么也看不到
+	Qt::Desktop									//没有显示在桌面也没在任务。但是任务管里器里还有，这个可以用于隐藏的病毒
+	Qt::CustomizeWindowHint						//标题栏也没有 按钮也没有 在那里出现就站在那里不到，也不能移动和拖到，任务栏右击什么也没有，任务栏窗口名也没有，但是可以从任务管理器里关闭
+	Qt::SplashScreen							//标题栏也没有 按钮也没有 在那里出现就站在那里不到，也不能移动和拖到，任务栏右击什么也没有，任务栏窗口名也没有， 但是可以从任务管理器里关闭
+	Qt::ToolTip							        //标题栏也没有 按钮也没有 在那里出现就站在那里不到，也不能移动和拖到，任务栏右击什么也没有，任务栏窗口名也没有， 但是可以从任务管理器里关闭 顶层窗口 一直都是在最上面，这个可以用于明显的病毒
+	Qt::ForeignWindow							//没有按钮，有标题栏，有移动，不能改变大小
+	Qt::CoverWindow								//没有按钮，有标题栏，有移动，不能改变大小
+	Qt::WindowType_Mask							//没有按钮，有标题栏，有移动，不能改变大小
+	Qt::FramelessWindowHint						//没有按钮，没有标题栏，不能移动，不能改变大小	
+}

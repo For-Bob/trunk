@@ -1,0 +1,2350 @@
+参考	QT Quick核心编程
+
+实战//https://blog.csdn.net/liang19890820/article/details/50277095 
+教程//https://blog.csdn.net/cloud_castle/article/details/28412867
+
+QT安装目录下的控件源码位置：\5.6\mingw49_32\qml\QtQuick\Controls
+
+{slider的styleData.handlePosition
+	你可以得到滑块的位置信息通过styleData.handlePosition属性
+}
+
+{编码约定
+	QML对象特性一般使用下面的顺序进行构造：
+	id
+	属性声明
+	信号声明
+	JavaScript函数
+	对象属性
+	子对象
+	状态
+	状态切换
+}
+
+{cpp文件加载QML文件
+	QQmlApplicationEngine engine;
+    engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
+}
+
+{分组属性
+	点标记
+	font.pixelSize:12; font.bold: true;
+	组标记
+	font {pixelSize: 12; bold: true}
+}
+
+{Q_PROPERTY(type name
+
+             (READ getFunction [WRITE setFunction] |
+              MEMBER memberName [(READ getFunction | WRITE setFunction)])
+             [RESET resetFunction]
+             [NOTIFY notifySignal]
+             [REVISION int]
+             [DESIGNABLE bool]
+             [SCRIPTABLE bool]
+             [STORED bool]
+             [USER bool]
+             [CONSTANT]
+             [FINAL])
+			 属性名称和类型以及READ是必须的，类型可以是QVariant支持的所有类型或者自定义；
+
+	WRITE功能常见，除了USER默认true其他均默认为false
+	
+	列子
+		Q_PROPERTY(int m_time_cont READ timeCnt WRITE setTimeCnt NOTIFY timeCntChanged)
+		Q_PROPERTY(bool focus READ hasFocus);                    //从 hasFocus  读取 focus的值
+		Q_PROPERTY(enabled READ isEnabled WRITE setEnabled);// 从 isEnabled取值到enable 然后写入 setEnabled
+		
+		.h文件
+			Q_PROPERTY(QString  strArtist           MEMBER  m_strArtist             NOTIFY  sigID3InfoChanged)
+			private:
+				QString m_strArtist;
+				
+			signals:
+				void sigID3InfoChanged();			
+		
+		.cpp文件
+			void jsonclass::function(QString str){
+				str = m_strArtist;
+				emit sigID3InfoChanged();
+			}
+		
+		main.cpp文件
+			jsonclass *myCalc = new jsonclass();
+			QQmlContext *context1 = engine.rootContext();
+			context1->setContextProperty("CalcValue",myCalc);
+		.qml文件
+			Text{
+				text:CalcValue.strArtist;
+			}
+		
+		//这种有一种好处，就是qml那边不用connecetion
+		
+}
+
+Component{
+	是一个类似于qml的组件，即使你声明了，但是用的时候需要实例化，其他控件比如Text：声明的时候就创建了，用的时候直接用id，Component就需要在用的地方创建，创建：比如crateObject或者Loader
+}
+//执行函数
+Component.onCompleted{
+	//函数体，或或者执行的代码
+}
+
+{QML的数据类型
+	int		整型
+	bool		布尔值
+	real		单精度浮点型
+	double		双精度浮点数
+	string		字符串
+	url		资源定位符
+	list		QML对象列表
+	var		通用属性类型
+	enumeration	枚举
+
+	QtQuick模块提供的基本类型
+	color		ARGB颜色值，可以用多种方法表示
+	font		QFont的QML类型，包含了QFont的属性值
+	matrix4x4	一个4行4列的矩阵
+	quqternion	一个4元数，包含一个标量以及x,y和z属性
+	vector2d	二维向量，包含x和y两个属性
+	vector3d	三维向量，包含x，y和z三个属性
+	vector4d	四维向量，包含x，y，z和w四个属性
+	date		日期值
+	point		点值，包含x和y两个属性
+	size		大小值，包含width和height两个属性
+	rect		矩形值，包含x，y，width和height共4个属性
+}
+
+{Window
+	import QtQuick.Window 2.1
+	window对象可以创建一个新的顶层窗口来作为Qt Quick的活动场景
+	contentOridentation属性用来设置窗口的内容布局。
+		Qt.PrimaryOrientation,使用显示设备的首选方向。
+		Qt.LandscapeOrientation.横屏
+		Qt.PortraitOrientationn,竖屏
+		Qt.InvertedLandscapeOrientation,相对于横屏模式，旋转了180度。
+		Qt.InvertedPortraitOrientation,相对于竖屏模式，旋转了180度。
+}
+
+{alias		属性别名
+	property alias<name>:<alias reference>
+	例子：
+		import QtQuick 2.2
+		Rectangle{
+			property alias buttonText: textItem.text
+			width:100;
+			height: 30;
+			color: "yellow"
+			Text{
+				id:textItem
+			}
+		}
+		
+}
+
+
+声明一个自定义的属性以及这个文件名，并要求首字母大写，否则会出问题
+
+
+qsTr()
+
+
+text.qsTr("File %1 of %2").arg(counter).arg(total)
+
+{将参数带入
+	var name = '小明';
+	var age = 20;
+	console.log(`你好, ${name}, 你今年${age}岁了!`);
+	你好, 小明, 你今年20岁了!
+}
+
+{Item 是所有子控件的父控件
+	x,y：坐标轴位置
+	z是real，数值越小，图元就离我们更远，数值越大，图元就越靠近我们
+	opacity：透明度，0.0-1.0
+	clip：true	根据自己的大小来裁剪它以及它孩子的小大；false 子控件有可能跑出item之外
+	Keys：为item提供按键处理
+		{
+			Properties
+				enabled : bool				//是否有效
+				forwardTo : list<Object>	
+						forwardTo是个列表属性list<Object>，设置按键事件传递的顺序，某个QML对象在这个列表属性中时，即使没有设置focus为true也能响应按键事件，如果某个按键事件被列表属性中前面的Item处理了，后面的Item就不会再收到这个按键信号。
+				priority : enumeration 
+					关联的组件自己的按键之前还是之后处理按键。
+					Keys.BeforeItem(default) - 在一般组件按键处理之前，处理按键。如果按键事件被接收，它将不会传递到组件。
+					Keys.AfterItem- 在组件处理按键之后处理按键。如果组件接收了按键事件，它将不会被Keys关联属性处理。
+			Signals
+				asteriskPressed(KeyEvent event)
+				backPressed(KeyEvent event)
+				backtabPressed(KeyEvent event)
+				callPressed(KeyEvent event)
+				cancelPressed(KeyEvent event)
+				context1Pressed(KeyEvent event)
+				context2Pressed(KeyEvent event)
+				context3Pressed(KeyEvent event)
+				context4Pressed(KeyEvent event)
+				deletePressed(KeyEvent event)
+				digit0Pressed(KeyEvent event)
+				digit1Pressed(KeyEvent event)
+				digit2Pressed(KeyEvent event)
+				digit3Pressed(KeyEvent event)
+				digit4Pressed(KeyEvent event)
+				digit5Pressed(KeyEvent event)
+				digit6Pressed(KeyEvent event)
+				digit7Pressed(KeyEvent event)
+				digit8Pressed(KeyEvent event)
+				digit9Pressed(KeyEvent event)
+				downPressed(KeyEvent event)
+				enterPressed(KeyEvent event)
+				escapePressed(KeyEvent event)
+				flipPressed(KeyEvent event)
+				hangupPressed(KeyEvent event)
+				leftPressed(KeyEvent event)
+				menuPressed(KeyEvent event)
+				noPressed(KeyEvent event)
+				pressed(KeyEvent event)
+				released(KeyEvent event)
+				returnPressed(KeyEvent event)
+				rightPressed(KeyEvent event)
+				selectPressed(KeyEvent event)
+				spacePressed(KeyEvent event)
+				tabPressed(KeyEvent event)
+				upPressed(KeyEvent event)
+				volumeDownPressed(KeyEvent event)
+				volumeUpPressed(KeyEvent event)
+				yesPressed(KeyEvent event) 
+		}
+}
+
+{Rectangle Inherits: Item
+	
+	antialiasing : bool
+		antialiasing: true;//抗锯齿，默认就是开启的
+		
+	radius:10	//圆角，值越大，圆角越大
+	
+	focus:bool	//是否聚焦
+	
+	
+	
+	roration:90	//顺时针旋转90度
+
+	border	//边框
+		border.width:int
+		border.color:color
+	
+	
+	antialiasing : bool
+	border.color : color
+	border.width : int
+	color : color
+	gradient : Gradient
+	radius : real
+	The following members are inherited from Item.
+	activeFocus : bool
+	activeFocusOnTab : bool
+	anchors.alignWhenCentered : bool
+	anchors.baseline : AnchorLine
+	anchors.baselineOffset : real
+	anchors.bottom : AnchorLine
+	anchors.bottomMargin : real
+	anchors.centerIn : Item
+	anchors.fill : Item
+	anchors.horizontalCenter : AnchorLine
+	anchors.horizontalCenterOffset : real
+	anchors.left : AnchorLine
+	anchors.leftMargin : real
+	anchors.margins : real
+	anchors.right : AnchorLine
+	anchors.rightMargin : real
+	anchors.top : AnchorLine
+	anchors.topMargin : real
+	anchors.verticalCenter : AnchorLine
+	anchors.verticalCenterOffset : real
+	antialiasing : bool
+	baselineOffset : int
+	children : list<Item>
+	childrenRect.height : real
+	childrenRect.width : real
+	childrenRect.x : real
+	childrenRect.y : real
+	clip : bool
+	data : list<Object>
+	enabled : bool
+	focus : bool
+	height : real
+	implicitHeight : real
+	implicitWidth : real
+	layer.effect : Component
+	layer.enabled : bool
+	layer.format : enumeration
+	layer.mipmap : bool
+	layer.samplerName : string
+	layer.smooth : bool
+	layer.sourceRect : rect
+	layer.textureMirroring : enumeration
+	layer.textureSize : size
+	layer.wrapMode : enumeration
+	opacity : real			不透明度
+	parent : Item
+	resources : list<Object>
+	rotation : real
+	scale : real
+	smooth : bool
+	state : string
+	states : list<State>
+	transform : list<Transform>
+	transformOrigin : enumeration
+	transitions : list<Transition>
+	visible : bool
+	visibleChildren : list<Item>
+	width : real
+	x : real
+	y : real
+	z : real
+	childAt(real x, real y)
+	object contains(point point)
+	forceActiveFocus(Qt::FocusReason reason)
+	forceActiveFocus()
+	bool grabToImage(callback , targetSize )
+	object mapFromItem(Item item, real x, real y, real width, real height)
+	object mapFromItem(Item item, real x, real y)
+	object mapToItem(Item item, real x, real y, real width, real height)
+	object mapToItem(Item item, real x, real y)
+	nextItemInFocusChain(bool forward)
+	The following members are inherited from QtObject.
+	objectName : string 
+		
+	{Gradient 渐变色 Item里面用不了，rectangle可以用
+	更多效果：	ConicalGradient，锥形渐变
+				LinearGradient，线性渐变
+				RadialGradient，径向渐变
+	参考：https://blog.csdn.net/foruok/article/details/43225263
+	
+	
+	position是0.0到1.0
+	
+	 gradient:Gradient{
+            GradientStop{position:0.0; color:"#102000"}
+            GradientStop{position:0.5; color:"#b02000"}
+            GradientStop{position:1.0; color:"#00A0A0"}
+        }
+	}
+	color: "#ea7025"
+	border.color: Qt.lighter(color)	//高亮那个颜色
+}
+
+
+{KeyEvent
+	
+}
+
+{Text 显示纯文本或富文本
+	font 字体
+	text 内容
+	color 颜色
+	elide 允许你设置文本左边，右边或者中间的省略位置。
+	textFormat 字体型号	
+	wrapMode	换行
+	horizontalAlignment	垂直居中
+	verticalAlignment	水平居中
+	style		风格
+	styleColor	//文字轮廓颜色
+	
+}
+
+{Button
+	import QtQuick.Controls 1.4
+	属性：
+		action : Action		//可以定义按钮的checked,text,tooltip,iconSource
+		activeFocusOnPress : bool	//按下是否获取焦点，默认是false
+		checkable : bool	//按键是否可选
+		checked : bool
+		exclusiveGroup : ExclusiveGroup
+		hovered : bool		//是否悬停上
+		iconName : string	//图标名字
+		iconSource : url	//通过URL的方式来指定icon的位置
+		isDefault : bool	//是否为默认按钮，如果是默认，用户按Enter就触发clicked()信号
+		menu : Menu			//给按钮设置一个菜单，点击就弹出菜单
+		pressed : bool		//保存了按钮的按下状态
+		style : Component	//定制按钮的风格，配套的有一个ButtonStyle
+		text : string
+		tooltip : string 
+	
+	信号：
+		clicked()
+}
+
+{Image
+	显示一张图片，动态图片用AnimatedSprite或者AnimatedImage.
+	width: 宽度
+	heiht:	长度
+	fillMode:	设置图片的填充模式		
+		Image.Stretch 拉伸		
+		Image.PreserveAspectFit	等比缩放		
+		Image.PreserveAspectCrop	等比缩放，最大化填充Image，必要是裁剪图片	
+			默认情况下裁剪是被禁用的（clip:false）。你需要打开裁剪（clip:true）来约束边界矩形的绘制。
+		Image.Tile	在水平和垂直两个方向平铺				
+		Image.TileVertically	垂直平铺
+		Image.TileHorizontally	水平平铺				
+		Image.Pad	保持原样不变
+	asynchronous bool	开启异步加载模式
+	source:string	文件路径：本地或者网络路径
+	smooth:bool	增加锯齿；是为了让图片更平滑
+	
+}
+
+{anchors 锚布局
+	左:left	水平中心:horizontalCenter	上:top	下:bottom	右:right	垂直中心:verticalCenter	基线:baseline
+	上：topMargin	下:bottomMargin	左：leftMargin	右：rightMargin
+}
+
+anchors.centerIn:parent,是将子控件放在父控件的正中心，子控件的宽高是自己设置的；
+anchors.fill：parent, 是在子控件的大小设置与父控件大小一样
+
+{ButtonStyle
+	background
+	control
+	label
+}
+
+{BusyIndicator
+	用来显示一个等待图元。
+}
+
+{FileDialog 文件对话框，
+	选择已有的文件，文件夹；支持单选，多选；保存文件或创建文件夹是让用户提供一个名字
+	visible默认为false,如要要显示对话框，则需要调用open()方式或者设置此属性为true
+	selectExisting属性默认为ture,表示选择已有的文件或文件夹；false，用于创建文件或文件夹名字
+	selectFolder属性默认为false,表示选择文件;true，选择文件夹。
+	selectMultipe属性默认为false,表示单选；true，多线。
+		当selectExisting为false，selectMultipe应该为false。
+	nameFilters用于设定一个过滤器列表。
+	selectedNameFilter则保存用户选择的过滤器，或者用来设置初始的过滤器。
+	fileUrl保存一个文件的路径。
+	fileUrls属性是列表，保存用户现在的所有文件的路径。
+	folder属性存放用户选择的（文件所在）文件夹的位置
+	
+}
+
+{ECMAScript
+	变量命名，第一个字符必须是字母，下划线或者美元符号
+	
+	var array = new Array();	//new出来的对象，不用delete
+	array = null;	//设置为null，该对象就被废除了，下次垃圾收集器运行时，就会销毁对象。
+	
+	{关键字
+		break	case	catch	continue	default	delete	do	else	
+		finally	for		function	if	in	instanceof	new		return
+		switch	this	throw	try	typeof	var	void	while	with
+	}
+	
+	{保留字
+		abstract	boolean	byte	char class	const	debugger	double	enum
+		exprot	extends	final	float	goto	implements	import	int		interface
+		long	native	package	private	protected	public	short	static	super	
+		synchronized	throws	thransient	volatile
+	}
+	
+	{原始类型
+		Underfined、Null、Boolean、Number和String
+	}
+	
+	{typeof
+		返回变量的类型
+		比如
+			var name = "zhang"
+			console.log(typeof name);	//输出 string
+			console.log(typeof 60);		//输出 number
+	}
+	
+	{Undefined
+		当什么的变量未初始化时，该变量默认值就是undefined
+		比如：var temp;
+	}
+	
+	{Null
+		Null类型也只有一个值，即null
+	}
+	
+	{Number
+		表示32位的整数，也可以表示64位的浮点数。
+	}
+	
+	{String
+		c++ QString映射到QML中时为String
+		"" ''双引号和单引号都是String
+		//装换为数字
+		parseInt()//转换为整数
+		parseFloat（）//转换为浮点数
+		length	//字符串长度
+		charAt()	//访问单个字符串 也可以：string[i]
+			charCodeAt(i);//对应位置的Unicode编码
+			
+		{查找子串
+			var str = new String("I\'m a string");
+			console.log(str.indexOf("ing"));	//输出9，从字符串的开头检索子串
+			console.log(str.search(/String/));	//输出-1，检索字符串中的子串，区分大小写，从开始进行查找
+			console.log(str.lastIndexOf(" "));	//输出5，从字符串的结尾开始检索子串
+			console.log(str.search(/String/i));	//忽略大小写，输出6
+			console.log(str.search(/String/i));	//输出9
+			console.log(str.match("tri"));		//输出tri
+			var numberSource = new String("2014-08-08,I got 96");
+			var results = numberSource.match(\/d+/g);
+			console.log(results.length);		//输出4
+			console.log(results);				//输出2014,08,18,96
+			
+		}
+		
+		{字符串比较
+			1.大于（>）,小于(<),等于（==）三个运算符
+			2.localeCompare() 等于返回0，小于返回小于0（-1），大于返回大于0的值（1）
+				str1 < str2
+				str1.localeCompare(str2)
+		}
+		
+		{连接字符串
+			1.concat	2.+
+			str1.concat(str2);
+			str1 + str2
+		}
+		
+		{提取子串
+			slice() 和substring()两个方法来提取子串。它们接受一个或两个参数，第一个为起始位置，第二为结束位置，如果忽略第二个参数，结束位置默认为字符串的长度。
+				slice()遇到负数参数时，会应用“从串尾倒数”这种策略，
+					比如slice（-3），凸起母串的后三个字符作为子串
+				substring()总是把较小的参数作为起始位置，比如substring(3,1)与substring（1,3）效果一样
+		}
+		
+		{大小写转换
+			toLowerCase()或toLocaleLowerCase()转换为小写
+			toUpperCase()或toLocaleUpperCase()转换为大写
+		}
+		
+		{字符串替换 replace()
+			var str = new String(Android,best);
+			console.log(str.replace("Android","iOS")); iOS,best
+		}
+		
+		{arg()进行值替换
+			
+		}
+		
+		
+		
+	}
+	
+	{toString
+		Boolean,Number,String都可以用toString
+	}
+	
+	{强制类型转换
+		Boolean(value)	//转换为布尔数
+		Number(value)	//转换为数字
+		String(value)	//转换为字符串
+	}
+	
+	{Object
+		Object类是所有ECMAScript类的基类。
+		constructor，创建对象的函数
+		prototype，该对象的对象原型的引用，C++中的类声明
+		hasOwnProperty(property)，判断对象是否有某个属性，property为字符串，
+			比如：root.hasOwnProperty("width")
+		isPrototypeOf(object),判断该对象是否为另一个对象的原型。
+		propertyIsEnumerable（property），判断给定的属性是否可以用for...in语句进行枚举
+		toString,返回对象的字符串表示。
+		valueOf(),返回最合适该对象的原始值。对于许多类，该方法返回的值都与toString()一样
+		
+		{动态增加属性
+			var person = new Object();
+			person.name = "zhangsan";
+			person.year = 20;
+		};
+		//构造了一个对象person，然后使用"."设置其name属性为zhangsan,year属性为20，这两个属性原本是没有的，实在对象已经创建之后添加。
+		
+		{动态增加方法
+			对象的方法就是一个函数，也可以动态增加，
+			person.printInfo = function printInfo(){
+				console.log("name -",this.name," year - ", this.year);
+			}
+			person.printInfo();
+		}
+		
+		{使用数组下标访问属性和方法
+			console.log(person["name"]); //person.name
+			person["printInfo"]();	//person.printInfo()
+		}
+		
+		{for...in枚举对象属性
+			for(var prop in person)
+			{
+				console.log(prop, ",", person[prop]);
+			}
+			输出
+				name, zhangsan
+				year, 20
+				printInfo, function(){[code]}
+			
+		}
+		
+		{对象的字面量表示法
+			var person = {
+				"name" : "zhangsan"
+				"year" : 20
+			}
+		}
+	}
+	
+	{RegExp正则表达式
+		修饰符：i,匹配时忽略大小写；
+				g，查找所有匹配而非在找到第一个匹配后停止，即全局匹配；
+				m，执行多行匹配
+		元字符：
+			".",匹配除换行符以外的任意字符
+			"\w",匹配字母、数字、下画线或汉字
+			"\s",匹配任意的空白符
+			"\S",匹配非空白字符
+			"\d",匹配数字
+			"\D",匹配非数字字符
+			"\b",匹配单词的开始或结束
+			"^",匹配字符串的开始
+			"$",匹配字符串的结束。
+			
+			比如：\d+：表示匹配一个或多个连续的数字。
+			
+		重复：
+			"*",重复零次或更多次
+			"+",重复一次或更多次
+			"？",重复零次或一次
+			"{n}",重复n次
+			"{n,}",重复n次或更多次
+			"{n,m}",重复n到m次
+			
+			比如："/029-?\d{8}/mg":匹配多行029-或（029）后面8个数字的，
+			
+		字符集合：
+			[xyz]匹配x，y，z就是匹配字符集合里面的其中一个
+			
+		转义字符
+			\	\t,\n,\\表示t，n，\
+			
+		String类的search(),match(),replace(),split()都支持正则表达式
+	}
+	
+	{array数组
+		创建数组
+			1.var a = new Array();
+			2.var a = new Array(10);			//10个长度
+			3.var a = new Array(10,6,3,21,22,30,8);	//赋值
+			
+		访问数组：下标访问；a.length	a的长度
+		
+		修改数组
+			push()向数组末尾插入一个或多个元素，返回数组新长度。
+			pop()方法删除并返回数组的最后一个元素。
+			增加值，比如a只有4个数据内存，你可以a[4] = 3;
+			shift()方法删除并返回数组的第一元素。unshift向数组开始添加一个元素并返回新的数组长度。
+			reverse()，颠倒数组中的顺序，改变原来的数组。
+			sort()，排序并返回，改变原来的数组。
+			
+		转换为字符串
+			join方法可以把数组中的所有元素组合成一个字符串，字符串之间可以用给定的分隔符来填充。
+				这个不带参数与toString方法一致
+				
+		{数组分隔与合并
+			concat()方法可以连接两个或多个数组，它的参数既可以是一个单一的值，也可以是一个数组对象。它不会改变现有数组，而是返回一个新的数组对象。
+			
+			slice(start,end)方法与String类的slice()方法用法相近，它将母数组中start到end之间的元素放到一个新数组中返回。
+			
+			splice(index, howmany, item1, ...., itemN)删除从Index开始的howmangy个元素，将item1到itemN插入到数组中。如果删除了元素，splice()会返回被删除元素组成的数组。它会改变原有数组。
+			
+			例子
+				var ary = new Array("I","like","QT","Quick");
+				var subAry = ary.slice(2, 4);
+				console.log(subAry.join(" "));
+				var newArry = ary.concat("!",subAry);
+				console.log(newArry.join(" "));
+			   // newArry[0] = "Do you";
+				//console.log(newArry.join(" "));
+				newArry.splice(4,3,"?","Yes","!");
+				console.log(newArry.join(" "));
+					输出：
+						qml: QT Quick
+						qml: I like QT Quick ! QT Quick
+						qml: I like QT Quick ? Yes !
+						
+				var ary = new Array("I","like","QT","Quick");
+				var subAry = ary.slice(2, 4);
+				console.log(subAry.join(" "));
+				var newArry = ary.concat("!",subAry);
+				console.log(newArry.join(" "));
+				newArry[0] = "Do you";
+				console.log(newArry.join(" "));
+				newArry.splice(4,3,"?","Yes","!");
+				console.log(newArry.join(" "));
+					输出：
+						qml: QT Quick
+						qml: I like QT Quick ! QT Quick
+						qml: Do you like QT Quick ! QT Quick
+						qml: Do you like QT Quick ? Yes !
+		}
+		
+		数组的字面量表示法
+			var a = [2,23,3,"?","Quick"]
+	}
+	
+	{Math 执行数学运算
+		属性：
+			E,算术常量e，即自然对数的底数(约等于2.718)
+			LN2，2的自然对数(约等于0.693)
+			LN10，10的自然对数(约等于2.302)
+			LOG2E,以2为底的e的对数(约等于1.442)
+			LOG10E，以10为底的e的对数(约等于0.434)
+			PI,圆周率(约等于3.14159)
+			SQRT1_2,2的平方根的倒数(约等于0.707)
+			SQRT2,2的平方根(约等于1.414)
+		方法：
+			abs(x),返回数的绝对值
+			acos(x),返回数的反余弦值
+			asin(x),返回数的反正弦值
+			atan(x),返回x的反正切值，返回值是介于-PI/2与PI/2之间的弧度
+			atan2(y,x),返回从x轴到点(x,y)的角度，返回值是介于-PI与PI之间的弧度
+			ceil(x),对数进行上舍入
+			cos(x),返回数的余弦值
+			exp(x),返回e的指数
+			floor(x),对数进行下舍入
+			log(x),返回数的自然对数(底为e)
+			max(x,y),返回x和y中的最大值。
+			min(x,y),返回x和y中的最小值。
+			pow(x,y),返回x的y次幂
+			random(),返回0~1之间的随机数
+			round(x),把数四舍五入为最接近的整数
+			sin(x),返回数的正弦值
+			sqrt(x),返回数的平方根
+			tan(x),返回角的正切值
+			valueOf(),返回Math对象的原始值。
+	}
+	
+	{Date
+		Date对象用于处理日期和时间。
+		var today = new Date();
+		
+		new Date(value);
+		new Date(dateString);
+		new Date(year,month,day,hour,minute,second,millisecond);
+		
+		下列方法可以从Date对象中提取信息：
+			getDate(),返回一个月中的某一天(1~31).
+			getDay(),返回一周中的某一天(0~6).
+			getMonth(),返回月份（0~11）
+			getFullYear（），返回4位数字年份。
+			getHours(),返回小时（0~23）
+			getMinutes(),返回分钟（0~59）
+			getSeconds(),返回秒数（0~59）
+			getMilliseconds（），返回毫秒（0~999）。
+			getTime(),返回1970年1月1日至今的毫秒数。
+			toString，把日期转换为本地字符串。
+		设置Date对象的相关信息:
+			setDate(),设置一个月中的某一天(1~31).
+			setMonth(),设置月份（0~11）
+			setFullYear（），设置4位数字年份。
+			setHours(),设置小时（0~23）
+			setMinutes(),设置分钟（0~59）
+			setSeconds(),设置秒数（0~59）
+			setMilliseconds（），设置毫秒（0~999）。
+			setTime(),以1970年1月1日至今的毫秒数设置Date
+	}
+	
+	{函数
+		function functionName(arg1,arg2,...,argN)
+		{
+			//函数体
+		}
+	}
+	
+	{关键字运算符
+		void,typeof,instanceof,new,delete
+		
+		instanceof用来测试一个对象的实际类型。
+		var str = new String("hello");
+		console.log(str instanceof String); //输出true
+	}
+	
+	{输出日志信息
+		console.log();
+		console.debug();
+		console.info();
+		console.warn()
+		console.error();
+	}
+	
+	{计时器
+		console.time(tag)	//启动定时器
+		console.timeEnd(tag)	//停止计时器
+	}
+	
+	{URI编码
+		encodeURI()和encodeURIComponent()这两个方法用于编码URI
+			encodeURI用于处理完整的URI
+			和encodeURIComponent用于处理URI的一个片段
+		decodeURI()和decodeURIComponent()这两个方法用于URI解码
+	}
+	
+	{JSON对象
+		JSON对象是一个单例对象，包含两个对象，即parse()和stringify();
+			parse()用于解析JSON文本，生成ECMAScript对象，返回json对象
+			stringify()可以将ECMAScript对象转换为JSON格式的字符串。
+	}
+	
+	{QT对象的属性
+		QT.application是一个对象，可以通过它访问应用的全局状态。
+		application有一个信号，aboutToQuit(),在应用要退出时发射，可以用来做一些清理工作，与QCoreApplication的aboutQuit是一个东西
+	}
+	
+	{其他方法
+		Qt.quit()，退出应用
+		String Qt.md5(string),计算字符串的MD5,
+		string Qt.btoa(string),做base64编码，并返回
+		string Qt.atob(string),做base64解码，并返回
+		string Qt.resolvedUrl(url),将传入的相对路径转换为全路径
+		list<string> Qt.fontFamilies(),返回系统支持的字体族的名字列表。
+	}
+}
+
+{附加属性和附加信号处理器
+	附加属性和附加信号处理器是一种允许对象使用额外的属性或信号处理器的机制，如果没有这种机制，这些属性或信号处理器就无法应用于这个对象。特别是这个机制允许对象访问一些与个别对象相关的属性或者信号。
+	
+	在实现一个QML类型时，可以选择性地创建一个包好特定属性和信号的附加类型，该类型的实例在运行时可以被创建并附加给指定的对象，这样便允许这些对象访问附加类型中的属性和信号。
+	
+	附加属性和附加信号处理器的语法如下:
+		<ArrachingType>.<propertyName>
+		<ArrachingType>.on<SignalName>
+	
+	附加属性
+		例如，ListView类型包含一个附加属性ListView.isCurrentItem，可以附件到ListView的每一个委托对象。这个属性可以让每一个独立的委托对象确定其是不是视图中单签选择的对象。
+		import QtQuick 2.2
+		ListView{
+			width: 240; height: 320; model: 3; focus: true
+			delegate: Rectangle{
+				width: 240; height: 30
+				color: ListView.isCurrentItem ? "red": "yellow"
+			}
+		}
+		上面的代码中附加类型的名称是ListView，而相关的属性是isCurrentItem，因此需要使用ListView.isCurrentItem引用这个附加属性。
+		
+	附加信号处理器
+		附加信号处理器也是类似的。例如Component.onCompleted就是一个常用的附加信号处理器，用于在组件创建完成时执行一些JavaScript代码。
+		在下面的例子中，一旦ListModel完全创建，Component.onCompleted洗好处理器就会自动调用来填充模型。
+		import QtQuick 2.2
+		ListView{
+			width: 240; height:320
+			
+			model:ListModel{
+				id:listModel
+				Component.onCompleted:{
+					for(var i = 0; i < 10; i++)
+						listModel.append({"Name"："Item" + 1})
+				}
+			}
+			delegate: Text{text: index + " " + Name}
+		}
+	同样的，因为附加类型completed属于Component，因此需要使用Component.onCompleted来引用这个信号处理器。		
+}
+
+{从JavaScript动态创建QML对象
+	{1.动态创建对象
+		有两种方法可以通过JavaScript动态创建对象：一是调用Qt.createComponent()函数动态创建一个Component对象；二是使用Qt.createQmlObject()函数，从一个QML字符串创建一个对象。
+		第一种方法适用于已经有一个QML文档定义的组件，而且希望动态创建该组件的一个实例；如果QML本身是在运行时产生的，那么可以使用第二种方法。
+		
+		{(1)动态创建一个组件
+			要动态加载定义在一个QML文件中的组件，可以调用Qt全局对象中的Qt.createComponent()函数。这个需要将QML文件的URL最为其参数，然后从这个URL上创建一个Component对象。
+			一旦有了一个Component。就可以调用它的createObject()方法来创建该组件的一个实例。该函数的原型为:
+				object createObject(Item parent, object properties)
+			它包含两个参数：第一个参数是新对象的父对象，父对象可以是图形对象或非图形对象。只有该对象时图形对象，其父对象也是图形对象时，该对象才会被渲染到Qt Quick可视化画布上；如果想
+			稍后再设置父对象，这里需要设置为null。第二个参数是可选的，它是一个属性-值对，是对象任意属性值的初始化定义。这个参数指定的属性值会在对象创建完成之前就指定到该对象上，这样就可以
+			避免属性绑定和初始化顺序可能引起的错误。
+			下面来看一个例子。首先是Sprite.qml文件，它定义了一个简单的QML组件：
+				import QtQuick 2.2
+				Rectangle{width:80; height:50; color: "red"}
+				
+			下面是主应用程序文件myjs.qml，导入了JavaScript文件componentCreateion.js，该文件将会创建Sprite对象：
+				import QtQuick 2.2
+				import "componentCreatioin.js" as MyScript
+				Rectangle{
+					id: appWindow
+					width:300; height: 300
+					Component.onCompleted: MyScript.createSpriteObjects();
+				}
+			
+			下面是componentCreation.js文件，其中在调用createObject()以前检查了组件的状态是否为Component.Ready，因为如果QML文件是从网络上加载的，那么它不会立即可用：
+				var component;
+				var sprite;
+				function createSpriteObjects(){
+					component = Qt.createComponent("Sprite.qml")
+					if(component.status == Component.Ready)
+						finishCreation();
+					else
+						component.statusChanged.connect(finishCreation);
+				}
+				
+				function finishCreation(){
+					if(component.status == Component.Ready){
+						sprite = component.createObject(appWindow,{"x": 100, "y": 100});
+						if(sprite == null)
+							console.log("Error creating object");
+					}
+					else if(component.status == Component.Error)
+						console.log("Error loading component:", component.errorString());
+				}
+				
+			如果可以确保QML文件是从本地文件加载的，那么可以忽略finishCreation()函数，而在createSpriteObject()函数中立即调用createObject()函数，例如上面的代码可以写成:
+				function createSpriteObjects(){
+					component = Qt.createComponent("Sprite.qml");
+					sprite = component.createObject(appWindow);
+					if(sprite == null){
+						console.log("Error creating object")
+					}
+					else{
+						sprite.x = 100
+						sprite.y = 100;
+						//...
+					}
+				}
+			注意，这里的createObject()使用了appWindow作为参数，所以创建的对象会成为	mian.qml中appWindow的子对象，并且会作为可视化对象出现在场景中。当使用相对路径来加载文件是，
+			需要是相对于执行Qt.createComponent()的文件的路径。将信号关联到动态创建的对象上，或者从动态创建的对象上接收信号，都要使用信号的connect()方法。
+			另外，也可以使用incubateObject()函数来实例化组建，该函数是非阻塞的，不会冻结用户界面。
+		}
+		
+		{(2)从QML字符串创建一个对象
+			如果QML知道运行时才被定义，可以使用Qt.createQmlObject()函数从一个QML字符串创建一个QML对象。例如：
+			var newObject = Qt.createOmlObject('import QtQuick 2.2; Rectangle{color: "red"; width: 20; height: 20}',
+												parentItem, "dunamicSnippet1");
+			第一个参数是要创建的QML字符串，就像一个新的文件一样，需要导入所使用的类型；第二个参数是父对象，与组件的父对象参数的语义相同；第三个参数是与新对象相关的文件的路径，
+			它用来报告错误。如果在QML字符串中导入的文件使用的是相对路径，那么需要是相对于定义父对象(第二个参数)的文件的路径。
+		}
+	}
+	
+	{2.维护动态创建的对象
+		当管理动态创建的对象时，必须确保创建上下文(creation context)不会再创建的对象销毁前被销毁，否则，动态创建对象中的绑定将不会再工作。实际的创建上下文依赖于对象时怎样被创建的：
+			
+			使用Qt.createComponent()函数，创建上下文就是调用该函数的QQmlContext;
+			
+			使用Qt.createQmlObject()函数，创建上下文就是父对象(第二个参数)的上下文；
+			
+			如果定义了一个Component{}，然后在其上调用了createObject()或incubateObject()，创建上下文就是该Component中定义的上下文。
+		另外需要注意，虽然动态创建的对象可以像其他对象一样来使用，但是它们没有id值。
+	}
+	
+	{3.动态删除对象
+		在很多用户界面中，可以将可视对象的透明度设置为0或将其移除屏幕来代替删除这些对象。然而，如果有很多动态生成的对象，则将这些不再需要的对象删除会得到一个很大的性能提升。
+		不过应该注意，永远不要手动删除通过QML对象工厂(例如Loader和Repeater)动态生成的对象，同时不要删除不是自己动态创建的对象。
+	
+		使用destroy()函数可以删除对象。这个函数有一个可选的参数(默认值为0)，可以用来设置在销毁该对象一起的以毫秒为单位的近似延迟时间。
+		在下面的例子中，applicationl.qml创建了SelfDestroyRect.qml组件的5个实例，每一个实例运行一个NumberAnimation，当动画结束时在其跟对象上调用destroy()来进行自我销毁。
+		下面是myjs.qml文件：
+		import QtQuick 2.2
+		Item{
+			id: container
+			width: 500; height: 100
+			Component.onCompleted:{
+				var component = Qt.createComponent("SelfDestroyRect.qml");
+				for(var i = 0; i < 5; i++){
+					var object = component.createObject(container);
+					object.x = (object.width + 10) * i
+				}
+			}
+		}
+		
+		下面是SelfDestroyingRect.qml文件的内容：
+		import QtQuick 2.2
+		Rectangle{
+			id: rect; width: 80; height:80; color:"red"
+			
+			NumberAnimation on opacity{
+				to:0; duration: 1000
+				onRunningChanged:{
+					if(! running){
+						console.log("Destroying...")
+						rect.destory();
+					}
+				}
+			}
+		}
+		另外，application.qml可以调用object.destroy()函数销毁创建的对象。注意，在一个对象内部调用destroy()来自我销毁时安全的。对象不会再destroy()被调用时就被销毁，而是在该脚本块的末尾
+		和下一帧之间的某个时间进行清理(除非将延时指定了一个非零值)。
+		还应该注意，如果SelfDestroyingRect实例被静态的创建，例如：
+		Item{
+			SelfDestroyRect{...}
+		}
+		 这样会产生一个错误。因为只有动态创建的对象才可以被动态删除。使用Qt.createQmlObject()创建的对象可以类似的使用destroy()来删除：
+		 var newObject = Qt.createQmlObject('import QtQuick 2.2; Rectangle{color: "red"; width: 20; height:20}', parentItem, "dynamicSnippet1");
+		 newObject.destroy(1000);
+		
+	}
+}
+
+{事件处理
+	鼠标，键盘，触摸.....每一种用户可能使用的与计算机或手机交互的方式，在Qt Quick中都体现为事件-----MouseEvent,KeyEvent,GustureEvent,PinchEvent
+	
+	一般信号是 clicked()时，信号处理其就命名为onClicked.
+	{Loader 用于动态加载QML组件
+		import QtQuick 2.5
+		QML的Loader元素经常备用来动态加载QML组件。可以使用source属性或者sourceComponent属性加载。这个元素最有用的地方是它能在qml组件需要的时候再创建，即延迟创建QML的时间。
+		main.qml  
+		------------------------------------  
+		import QtQuick 2.0  
+		  
+		Item {  
+			property bool isFirst : false;  
+			width: 200  
+			height: 200  
+		  
+			Loader {  
+				id: pageLoader  
+			}  
+		  
+			MouseArea {  
+				anchors.fill: parent  
+				onClicked: changePage();  
+			}  
+		  
+			function changePage() {  
+				if(isFirst) {  
+					pageLoader.source = "Page1.qml"  
+				} else {  
+					pageLoader.source = "Page2.qml"  
+				}  
+		  
+				isFirst = !isFirst;  
+			}  
+		  
+		}  
+		  
+		  
+		Page1.qml  
+		-------------------------------------  
+		import QtQuick 2.0  
+		  
+		Rectangle {  
+			width: 100  
+			height: 62  
+			Text {  
+				anchors.centerIn: parent  
+				text: "Page1 Test"  
+			}  
+		}  
+		  
+		  
+		Page2.qml  
+		---------------------------------------  
+		import QtQuick 2.0  
+		  
+		Rectangle {  
+			width: 100  
+			height: 62  
+			Text {  
+				anchors.centerIn: parent  
+				text: "Page1 Test"  
+			}  
+		}  
+		
+	}
+	
+	{定义自己的信号
+	//比如c++的信号为colorChanged			
+	//QML里面的连接的就应该onColorChanged Color的第一字母必须为大写
+		Connections{
+			target:目标ID
+			onSignal:{
+				//处理
+			}
+		}
+		
+		{信号与槽的连接
+			比如：方法1
+			Rectangle{
+				id:relay
+				signal messageReceived(string person,string notice);
+				
+				Component.onCompleted:{
+					realy.messageReceived.connect(sendToPost);
+				}
+				
+				function sendToPost(person, notice){
+					console.log("sending to post:" + person + ", " + notice);
+				}
+			
+			}
+			
+			比如：方法2
+			Rectangle{
+				id:forwarder
+				width:100
+				height:100
+				
+				signal send();
+				onSend:console.log("Send clicked")
+				
+				MouseArea{
+					id:mousearea;
+					anchors.fill: parent;
+					onClicked: console.log("MouseArea clicked");
+				}
+				
+				Component.onCompleted:{
+					mousearea.clicked.connect(send);
+				}
+			}
+		}
+	}
+
+	{MouseArea
+		MouseArea对象可以附加到一个Item上供Item处理鼠标事件。
+			enabled 用来控制是否处理鼠标事件，默认值是true
+			acceptedButtons设定接受哪些鼠标按键产生的事件(左键，右键，中键)
+				Qt.LeftButton	| Qt.RightButton
+			anchors.fill:parent 表示整个矩形区域都接受鼠标事件。
+			其他属性hoveredEnable;pressed等，
+			使用了onClicked和onDoubleClicked两个信号处理器，它们对应的信号为clicked和doubleClicked,
+				其他信号，pressed,released,entered,exited,pressAndHold.
+			preventStealing：用于鼠标事件是否被截取；true，不允许截取
+	}
+	
+	{键盘
+		信号：
+			returnPressed，escapePressed，downPressed，digit0Pressed:(0~9),backPressed等，
+			还有更为普通的pressed和released信号，这两个信号可以用来处理大部分按键，它们有个名字是event，类型是KeyEvent的参数
+		KeyEvent代表一个按键事件，如果一个按键被处理，event.accepted应该被设置为true，以免它被继续传递
+		Keys有三个属性
+			enabled属性控制是否处理按键。
+			forwaTo属性是列表类型，它表示传递按键事件给列表内的对象，如果某个对象accept了某个按键，那位列其后的对象就不会收到该按键事件。
+			priori属性允许你设置Keys附加属性的优先级，有两张，在Item之前处理按键（默认行为），在Item之后处理按键。
+			让某个元素处理按键，则需要把焦点给它，这通过Item的focus属性来控制，设置为true即可。
+	}
+	
+	{定时器
+		Timer类代表定时器，使用起来很简单，响应其triggered()信号即可。
+			interval指定定时周期，单位是毫秒，默认值是1000毫秒，
+			repeat设定是周期触发还是一次性触发，默认是一次性
+			running，设置为true就开始工作，设置为false就歇菜，默认值是false
+			triggeredOnStart属性，定时器启动后要等待设定的间隔才触发，如果你设置这个属性为true，那么定时器开始执行立马触发一次，默认值是false。
+			start(),stop(),restart()三个方法可以调用
+	}
+	
+	{PinchArea捏拉手势
+		PinchArea是Item的派生类
+		enabled属性的默认值为true，如果设置为false，那么PinchArea就不干事。
+		pinch属性描述捏拉手势的详情，它是一个组合属性，包括target,action,minimumScale,maximumScale,minimumRotation,maximumRotataion,dragAxis,minimumX,maximumX,minimumY,maximumY
+		target指明捏拉手势要操作的Item，active(bool类型)属性表示目标Item是否正在被拖动。
+		minimumScale,maximumScale设置最小，最大缩放系数。minimuxRotation,maximumRotataion设置最小，最大旋转角度，这4个属性都是real类型。
+		dragAxis设置沿X轴(Pinch.XAxis),Y轴(Pinch.YAxis)还是XY(Pinch.XAndYAxis)两个轴拖动，你也可以禁止拖动，只要给dragAxis赋值Pinch.NoDrag即可。
+		信号：pinchStarted(),pinchUpdated(),pinchFinished()。
+		PinchEvent具有下列属性：
+			accepted,在onPinchStarted()信号处理器中设置为true，表明你要响应PinchEvent，Qt会持续发给你更新事件;设置为false，Qt就不会在发PinchEvent事件给你了。
+			angle，表示最近两个触电之间的角度，previousAngle是上一次事件的角度，rotation是从捏拉手势开始到当前事件的总旋转角度。
+			scale，便是最近两个触点之间的缩放系数，perviousScale是上一次事件的缩放系数。
+			center，两个触点的中心点，perviousCenter是上一次事件的中心点，startCe是事件开始时的中心点。
+			point1，point2保持当前触点的位置，startPoint1，startPoint2保持第二个触点按下时两个触点的位置。
+			pointCount保存到现在为止的触点总数。
+			pinchStarted()信号处理器中接受了TouchEvent事件后，Qt就会不断地放送新事件给你，pinchUpdated()信号就会不断发射，你可以在它的信号处理器中通过Ppinch参数，撷取你需要的值来更新PinchArea计生的Item的状态。
+			pinchFinished()信号在用户手指离开屏幕是触发。
+			
+			
+			
+	}
+
+	{组件与动态对象
+		{Loader用来动态加载QML组件。我们可以把Loader作为占位符使用，在需要显示某个元素是，才使用Loader把它加载进来
+			Loader可以使用其source属性加载一个QML文档，也可以通过其sourceComponent属性加载一个Component独享。当你需要演出一些对象知道真正需要需要才创建它们时。
+			 Loader非常有用。当Loader的source或sourceComponent属性发生变化时，它之前加载的Comp会自动销毁，将会销毁当前加载的对象，相关的资源也会被释放，而Loader对象则变成一个空对象。
+			 
+		}
+	}
+	
+	{Qt Quick元素布局
+		有两套与元素布局相关的类库，一套叫做Item Positioner(定位器)，一套叫作Item Layout(布局)
+		定位器包括Row(行定位器)，Column（列定位器），Grid（表格定位器），Flow（流失定位器）
+		布局管理器包括行布局（RowLayout）,列布局（ColumnLayout），表格布局（GridLayout）。
+		
+		Grid在一个网格上安置它的子Item，它会创建一个拥有很多单元格的网格，足够容纳它的所有子Item，Grid会从左到右，从上到下把它的子Item一个个塞到单元个里。Item默认会被放在一个单元个左上角，即(0,0)位置。
+			可以通过rows和columns属性设定表格的行，列数。如果不设置，默认只有4列，而行数则会根据实际的Item数量自动计算。rowSpacing和columnSpacing指定行，列间距，单位是像素
+			flow属性描述表格的流模式，Grid.LeftToRight是默认值，这种流模式从左到右一个挨一个放置Item，一行放满再放下一行。
+			flow取值为Grid.TopToBottom时，从上到下一个挨一个放置Item，一列放满再放下一列。
+			horizontalItemAlignment和verticalItemAlignment指定单元格对齐方式。默认的单元格对齐方式和layoutDirection以及flow有关。
+			
+		Flow其实和Grid类似，不同之处是它没有显示的行，列数，它会计算子item的尺寸，然后与自身尺寸比较，按需折行。
+		
+		布局管理器
+			GridLayout会根据flow属性来排列元素，这与Grid定位器类似，flow属性的默认值是GridLayout.LeftToRight,从左到右安排元素，一行结束再另起一行。
+			如果flow取值GridLayout.TopToBottom时，GridLayout则从上到下安排元素，一列结束再另起一列。rows属性指定GridLayout的行数。
+			 管理的Item，可以使用下列附加属性
+				Layout.row
+				Layout.column
+				Layout.rowSpan
+				Layout.columnSpan
+				Layout.minimumWidth
+				Layout.minimumHeight
+				Layout.preferredWidth
+				Layout.preferredHeight
+				Layout.maximumWidth
+				Layout.maximumHeight
+				Layout.fillWidth
+				Layout.fillHeight
+				Layout.alignment
+			RowLayout可以看作是只有一行的GridLayout
+				Layout.minimumWidth
+				Layout.minimumHeight
+				Layout.preferredWidth
+				Layout.preferredHeight
+				Layout.maximumWidth
+				Layout.maximumHeight
+				Layout.fillWidth
+				Layout.fillHeight
+				Layout.alignment
+			ColumnLayout可以看作是只有一列的Grid
+				Layout.minimumWidth
+				Layout.minimumHeight
+				Layout.preferredWidth
+				Layout.preferredHeight
+				Layout.maximumWidth
+				Layout.maximumHeight
+				Layout.fillWidth
+				Layout.fillHeight
+				Layout.alignment
+	}
+	
+	{Qt Quick常用元素介绍
+		{行编辑（TextInput与TextField）
+			{TextInput用于编辑一行文本，类似与QLineEdit，支持使用validator或inputMask对输入文本做范围限制，也可以设置echoMode实现密码框的效果。
+				 font分组属性允许你设置TextInput元素所用字体的各种属性，包括字体族(family),大小(pixelSize,pointSize),粗细(bold,weight),斜体（italic），下划线（underline）等
+				 还有一些属性与Text元素一样，如text属性可以设置或获取元素的文本，horizontalAlignment和verticalAlignment用于设定文本对齐方式，
+				 wrapMode设置文本超过控件宽度时的换行策略，color设置文字颜色，contentWidth，contentHeight返回文本的宽，高
+				 lenght属性返回编辑框内的字符个数，使用它比通过text属性取得文本在调用String对象的length方法效率要高很多。
+				 maximumLen设置编辑框允许输入的字符串的最大长度，超过这个长度就会被截断。
+				 TextInput的cursor就是光标，可以通过cusorDelegate来定制它的外观，cursorPosition可以是指会返回光标位置，cursorVisible设置或返回光标的可见状态
+				 cursorRectangle是只读属性，返回光标所在矩形，定制的cursorDelegate会受这个属性影响，当cursorRectangle变化是，cursorDelegate的尺寸和位置会跟着变化。
+				 使用TextInput来输入密码，可以设置echoMode属性为TextInput.Password，TextInput.PasswordEchoOnEdit或TextInput.NoEcho.echoMode默认为TextInput.Normal，即输入什么显示什么
+				 比如你设置passwordCharacter为"*",echoMode为TextInput.Password,那么displayText属性内保存的就是一串"*"
+				 TextInput还支持粘贴(canPaste),撤销（canUndo），重做(canRedo)，滚动(autoScroll)
+				 
+				 inputMask是个字符串，用来限制你可以输入的字符，可以参考QLineEdit::inputMask来了解详情。
+				  如果你想让用户输入类似于"2017-01-30"这种格式的日期，可以将inputMask设置为"0000-00-00"，你想让用户输入沪市股票代码，可以设置inputMask为"600000"
+				  
+				 TextInput目前支持IntValidator,DoubleValidator,RegExpValidator,如果你设置了validator属性，name用户就只能输入符合validator所界定范围的字符。
+					validator:IntValidator{top:13;bottom:5} 设定最大值13，最小值是5
+				 TextInput允许用户选择文本，如果selectByMouse属性设置为true，用户就可以使用鼠标来选择编辑框内的文字。selectedText是只读属性，保存用户选中的文字。
+					selectionStart,selectionEnd表示选中的起，止位置，selectedTextColor表示选中的文本颜色，而selectionColor则表示选中框的颜色。
+					当用户按了回车键或确认件，或者编辑框失去焦点时，会发出accepted和editingFinished信号，开发者可以实现onAcc和onEditingFinished信号来处理
+					需要注意的时，如果你设置了inputMask和validator，那么只有在编辑框内的文本符合限制条件是这两个信号才会触发。
+			}
+			
+			{TextField
+				TextInput的文本颜色使用color属性指定，TextField文本颜色使用textColor属性指定。
+				TextInput没有背景，是透明的，能够与父空间无缝结合。而TextField有背景，其背景色可通过TextFieldStyle的background属性来设定。
+			}
+		}	
+		
+		{文本块（TextEdit与TextArea）
+			{TextEdit是提供的多行文本编辑框，它的大多数属性与TextInput类似
+				textDocument属性，可以结合QSyntaxHighlighter来属性语法高亮。
+				textFormat用于指定文本格式，是纯文本(TextEdit.PlainText)，富文本(TextEdit.RichText)，还是自动检测(TextEdit.AutoText)，默认值纯文本
+				lineCount属性返回编辑框内的文本行数。
+				因为支持富文本，TextEdit还有linkActivated信号，在用户点击文本中内嵌的链接时触发，linkHovered信号悬停文本内嵌的链接上方式触发。
+				当一行文本要占用的宽度大于TextEdit的宽度是，warpMode决定如何折行，它支持TextEdit.WordWrap:在单词边界处折行，TextEdit.NoWrap不折行，超出宽度不显示，
+					TextEdit.WrapAnywhere(折行，不考虑单词边界)，TextEdit.Wrap(折行，尽量在单词边界处折行)
+			}
+			TextEdit，TextInput，Text等元素的背景都不能定制，
+			
+			{TextArea
+				TextArea的文本颜色使用textColor属性指定，背景色可通过TextAreaStyle的background属性来设定。
+			}
+		}
+		
+		{ExclusiveGroup
+			ExclusiveGroup(互斥分组)本身是不可见元素，用于将若干个可选择元素组合在一起，供用户选择其中的一个选项。
+		}
+		
+		{RaidoButton
+			import QtQuick.Controls 1.2
+			RadioButton用于多选一的场景，使用时需要通过exclusiveGroup属性为其指定一个分组。它可以和GroupBox结合使用
+			text:单选按钮的文本
+			checked属性指示RadioButton是否被选中，
+			hovered时只读属性，指示鼠标是否在其上悬停
+			pressed属性在按钮被按下时true；
+			{RadioButtonStyle
+				用来定制一个RadioButton，使用时需要引入QtQuick.Controls.Styles 1.x
+				background：背景
+				indica选中指示图标
+				label单选按钮的文本，他们的类型都是Component
+				spacing只读图标和文本之间的间隔
+				control指向使用style的Radio对象，组件内的对象可以通过control访问。如focus，activeFocus，hovered等。
+			}
+		}
+	}
+}
+
+
+{C++与QML混合编程
+	{在QML中使用C++类和对象
+		1.信号，槽：只要是信号或者槽，都可以在QML中访问，可以把C++的信号连接到QML定义的方法上，也可以把QML对象的信号连接到C++对象的槽上。还可以直接调用C++对象的槽或信号。
+		
+		2.Q_INVOKABLE 宏：在定义一个类的成员函数时使用Q_INVOKABLE宏来修饰，就可以让该方法被元对象系统调用，这个宏必须放在返回类型前面。
+			用于QML调用C++的对象
+		
+		3.Q_ENUMS宏：QML导出定义在类中定义的枚举类型。
+		
+		4.{Q_PROPERTY宏：用来定义可通过元对象系统访问的属性，通过它定义的属性，可以在QML中访问，修改，可以在属性变化是发射特定的信号。
+			要想使用Q_PROPERTY宏，你的类必须是QObject的后羿。
+			Q_PROPERTY( type name
+				(READ getFunction[WRITE setFunction] |
+				MEMBER memberName[READ getFunction | WRITE setFunction])
+				[RESET resetFunction]
+				[NOTIFY notifySignal]
+				[REVISION int]
+				[DESIGNABLE bool]
+				[SCRIPTABLE bool]
+				[STORED bool]
+				[USER bool]
+				[CONSTANT]
+				[FINAL])
+			type name类型，int，float，QString，QObject，QColor，QFont等。
+			比较常用的是READ,WRITE,NOTIFY三个选项。
+			 READ标记，如果你没有为属性指定MEMBER标记，则READ标记必不可以少；声明一个读取属性的函数，该函数一般没有参数，返回定义的属性。
+			 WRITE标记，可选配置。声明一个设定属性的函数。它指定的函数没有返回值，只能有个一与属性类型匹配的参数。
+			 NOTIFY标记，可选配置。给属性关联一个信号(该信号必须是已经在类中声明过的)，当属性的值发生变化时就会触发该信号。
+		}
+		
+		{注册一个QML可用的类型，但是这个类并没有实例化，QML需要用的话，需要自己重新新建
+			1.实现C++类
+			2.注册QML类型
+			3.在QML中导入类型
+			4.在QML中创建由C++导出的类型的实例并使用
+			typeplate<typename T>
+			int qmlRegisterType(const char *uri,int versionMajor, int versionMinor, const char * qmlName);
+			 比如：qmlRegisterType<myMaker>("an.qt.MyMaker",1, 0,"MyMaker");
+				//myMaker类名，an.qt.MyMaker qml用于import的名字，1.0版本好，MyMaker是QML用的名字
+		}
+		{QQmlContext::setContextProperty 作用：将一个实例化的对象或者基本变量类型传入到QML中。
+			1.这个实例化的对象，所有的QML都是可以访问，并且都是一个，内容共享
+			2.c++代码可以随时操作对象的内容，QML那边可以在操作之后访问
+			
+			void setContextProperty(const QString &, QObject *);	//将一个C++实例化的对象传入到QML那边可以共同使用
+			void setContextProperty(const QString &, const QVariant &);//将一个变量传入到QML那边可以共同使用
+			例子：
+				QQmlApplicationEngine engine;
+				 myclass *cl = new myclass();	//你自己的类，这个类必须要是继承自QObject，看上面第二个QT的接口就明白了
+				 QQmlContext *context1 = engine.rootContext();//获取一个QQmlContext的对象
+				context1->setContextProperty("ChangeColor",cl);//注册一个cl，对应QML的访问就是ChangeColor
+				engine.load(QUrl(QStringLiteral("qrc:/main.qml")));//加载QML文件
+		}
+		qmlRegisterType和setContextProperty的区别
+			qmlRegisterType注册到QML那边的是C++的类，用的需要实例化，类似于一个button部件一样
+			setcontextProperty注册到QML那边的是C++的实例化对象，拿到就可以用
+		
+		
+	}
+	
+	{在C++中使用QML对象
+		QObject类的构造函数有一个parent参数，可以指定一个对象的父亲，QML中的对象其实借助这个组成的以根Item为根的一颗对象树。
+		{查找对象的孩子
+			objectname的一个例子讲解：https://blog.csdn.net/chenyijun/article/details/24696153
+			而QObject定义了一个属性objectName,这个对象名字属性，可以用于查找对象。
+			T QObject::findChild(const QSting & name, = QString(), Qt::FindChildOptions options = Qt::FindChildrenRecursively) const;
+			QList<T> QObject::findChildren(const QSting & name, = QString(), Qt::FindChildOptions options = Qt::FindChildrenRecursively) const;
+			QList<T> QObject::findChildren(const QRegExp &regExp,Qt::FindChildOptions options = Qt::FindChildrenRecursively) const;
+			QList<T> QObject::findChildren(const QRegularExpression &re, Qt::FindChildOptions options = Qt::FindChildrenRecursively) const;
+			
+			findChild是返回一个对象，findChildren返回对象列表
+		}
+		{使用元对象调用QML对象的方法
+			QMetaObject的invokeMethod()方法用来调用一个对象的信号，槽，可调用方法。它是个静态方法，
+			static inline bool invokeMethod(QObject *obj, 
+							 const char *member,
+                             Qt::ConnectionType type,
+                             QGenericArgument val0 = QGenericArgument(Q_NULLPTR),
+                             QGenericArgument val1 = QGenericArgument(),
+                             QGenericArgument val2 = QGenericArgument(),
+                             QGenericArgument val3 = QGenericArgument(),
+                             QGenericArgument val4 = QGenericArgument(),
+                             QGenericArgument val5 = QGenericArgument(),
+                             QGenericArgument val6 = QGenericArgument(),
+                             QGenericArgument val7 = QGenericArgument(),
+                             QGenericArgument val8 = QGenericArgument(),
+                             QGenericArgument val9 = QGenericArgument())
+			obj为调用对象的指针，member为方法名字，type为连接类型，第四个为接受返回值。
+		}
+		
+	}
+}
+
+{Canvas （画布）
+	Canvas{
+		width:320
+		height:240
+	}
+	
+	{画师 Context2D
+		Canvas{
+			onPaint:{
+				var ctx = getContext("2d");
+			}
+		}
+	}
+	{画刷	
+		在Context2D这里，fillStyle属性就是描述画刷的。
+	}
+	
+	坐标系：x，y坐标
+	
+	{绘制路径
+		1.调用beginPath();
+		2.调用moveTo(),lineTo(),arcTo(),rect(),quadraticCurveTo(),arc(),bezierCurveTo()等可以构造路径元素的方法。
+		3.调用fill()或stroke()。
+			调用fill()方法使用fillStyle保存的颜色来填充矩形，调用stroke()方法结束路径的绘制病使用strokeStyle保存的颜色描画路径的边线。
+		context2D的lienWidth属性，用来设置画笔的宽度。
+		fillStyle与Qt C++中的QBrush类似，保存用于填充图元的画刷。他可以是一个颜色值 ，也可以是CanvasGradient或CanvasPattern对象。
+		Context2D的createLinearGradient()方法用于创建一个线性渐变对象，createRadialGradient()方法可以创建一个放射渐变对象(类型为Context2D的createGradient)
+		createGradient对象的addColorStop()可以添加渐变路径上的关键点颜色。
+		
+		moveTo()方法可以移动到某个点，以这个点为起点开始一个新路径。
+		closePath()方法用于结束当前的路径，从路径终点到起点绘制一道题直线来封闭路径。
+		fill()方法根据fillStyle填充了三角形，stroke()则完成了描绘边框的工作。
+		绘制：二次方贝塞尔曲线quadraticCurveTo(),三次方贝塞尔曲线ezierCurveTo()，弧线(arc(),arcTo()),椭圆(ellipse())，文字(text())
+	}
+	
+	{绘制文本
+		fillText()，strokeText()，text()。
+		fillText()使用fillStyle填充文字。
+		strokeText()方法使用strokeStyle描画文字边框。
+		textstrokeText()方法在路径上调价一串文本作为构成路径的元素之一。
+		
+		cont2D的font属性，
+			font-style(可选),可以取normal，italic，oblique三值之一
+			font-variant(可选),可以取normal，small-caps二值之一
+			font-weight(可选),可以取normal，bold二值之一，或0~99的数字。
+			font-size,取Npx或Npt，其中N为数字，px代表像素，pt代表点，对于移动设备，使用pt为单位更合适一些。
+			font-family，常见的有serif,sans-serif,cursive,fantasy,monispace。
+	}
+	
+	{绘制图片
+		Context2D有三个不同形式的drawImage()方法，可以用来绘制图片。
+		
+		drawImage(variant image, real dx, real dy, real dw, real dh)//dx,dy是坐标轴，dw，dh//宽和高
+		drawImage(variant image,real dx,real dy)方法是最简的一个，它在dx，dy位置绘制指定的image对象代表的图片，可以是一个Image元素，一个图片URL，或者一个CnavasImageData对象。
+		在Component.onCompleted附加信号处理器内调用Canvas的loadImage()方法来加载图片，该方法会异步加载图片，当图片加载完成时，发射iamgeLoaded信号，
+			在对应的信号处理器onImageLoaded内调用requestPaint()方法来重绘Canvas。
+	}
+	
+	{变换	
+		就像QPainter一样，Context2D也支持平移(translate())，旋转(rotate())，缩放(scale())，错切(shear())等图形变换，它还支持简单的矩形变换(setTransform()).
+		//object shear(real sh, real sv)
+		//在水平方向上用sh,在垂直方向上用sv剪切转换矩阵
+		//Shears the transformation matrix by sh in the horizontal direction and sv in the vertical direction.
+
+
+		//object setTransform(real a, real b, real c, real d, real e, real f)
+		//a is the scale factor in the horizontal (x) direction
+		//a是水平（x）方向的比例因子
+		//c is the skew factor in the x direction
+		//c是x方向上的斜因子
+		//e is the translation in the x direction
+		//e是x方向上的平移
+		//b is the skew factor in the y (vertical) direction
+		//b是y（垂直）方向上的斜因子
+		//d is the scale factor in the y direction
+		//d是y方向上的比例因子
+		//f is the translation in the y direction
+		//f是y方向上的平移
+		
+	}
+}
+
+{Mode/View
+	Qt中的Model-View编程框架，对Controller部分做了改动，引入了Delegate的概念，合适就是Model-View-Delegate。模型还是负责提供数据，视图则负责提供一个舞台，基本的布局管理和Item创建灯工作，剩下的，舞台上的每个演员就由Delegate负责实现，谁长什么样，
+		五官精致还是嘴歪眼斜，表演还是面瘫，视图都任它去，这都是Delegate的事情。
+		
+	在Qt C++中，对Model-View-Delegate已经做了基础实现，怎么设计一个Model-View框架已经不必我等费心了，只需学期Qt给我们的框架好好去用即可。
+							Rendering
+		data<----->Model--------------------->View
+					|							|
+					---------------〇--------------
+					Edeting		Delegate		Renderding
+					
+	QAbstractItemModel是大多数模型类库的祖先，比如QAbstractListModel，QAbstractProxyModel，QAbstractTabelModel，QFileSystemModel，QStringListModel，QStandardItemModel等。
+	QAbstractItemView是大多数视图类的祖先，如QListView，QTableView，QTreeView等。
+	QABstractItemDelegate则是Qt Model-View框架中所有Delegates的抽象基类。它又衍生出QStyledItemDelegate和QItemDelegate两个分支。你如果要实现自己的Delegate，可以从这两个类中选择一个作为基类，Qt推荐使用QStyledItemDelegate。
+	在Qt Quick中，Model-View编程变得更加简单，不简单也对不起Quick这个词儿不是。ListView。TableView，GridView，PathView等预定义的视图大多数时候可以满足你的需要，Model则有现成的ListModel，XmlListModel可用，而Delegate的实现则收益于Qt Quick的设计理念。
+	
+	{ListView
+		用来显示一个条目列表，条目对应的数据来自于Model，而每个条目的外观则由Delegate决定。我们可以将Delegate看成如何展示Item的一个模块。
+		要使用ListView，必须为其指定一个Model，一个Delegate。
+		Model可以是QML内建类型，如ListModel，XmlListModel，也可以是在C++中实现的QAbstractItemModel或QAbstarctListModel的派生类。
+			例子：BaseListView.qml
+		
+		header
+			通过为ListView的header属性设置一个Component，ListView就可以显示自定义的表头，表头将放在ListView的最开始，所有的Item之前。当你使用方向浏览Item或者用鼠标在ListView内拖动是，表头随着拖动可能会变得不可见。
+			例子：BaseListView1.qml
+			
+		footer
+			footer属性允许我们指定ListView的页脚，footerItem保存了footer组件创建出来的Item对象，这个Item会被添加到ListView的末尾，在所有可见的Item之后。
+			例子：BaseListView2.qml
+			
+		访问与修改Model{
+			例子：BaseListView3.qml
+			访问数据
+				ListModel的count属性表示Model中有多少条数据，int类型。dynamicRoles属性为布尔值，为true时表示Model中的role对应的值的类型可以动态改变，默认值是false。yaoshezhidynamicRoles，必须在添加数据之前。不过要注意的是，一旦你
+					使能了dynamicRoles，ListModel的性能会大大下降，通常它带来的性能损失是使用静态类型的4~6倍。
+				ListModel的get()方法接受一个int类型的参数，用来获取指定索引位置的数据，返回一个QML对象。
+			删除数据
+				如果你想删除一条或多条数据，可以使用ListModel的remove(int index,int count)方法，它有两个整型参数，第一个参数指明要删除的数据的索引位置，第二参数表示要删除的数据条数，默认值为1。
+				如果你想清空一个Model，可以直接调用clear()方法。
+			修改数据
+				要想修改Model的数据，可以使用ListModel的setProperty(int index,string property,variant value)方法。该方法有三个参数，第一个是数据的索引，第二个是数据内role的名字，第三个是role的值。
+				如果想替换某一条数据，可以使用set(int index, jsobject dict)方法。我们经常用对象的字面量表示法构造一个对象传递给set()方法。
+			添加数据
+				要向Model的尾部添加数据，可以使用append()方法。append()的参数是jsobject，在ECMAScript中可以使用对象的字面量表示法来构造这个jsobject，即花括号加key-value对的集合，类似于这样：{"name":"zhangsan","age":28},key-value对之间使用逗号分隔。
+				如果想在指定位置添加数据，可以使用insert()方法，它的第一个参数是整型的，代表插入的索引位置，第二个参数是jsobject。
+			}
+		动画效果{
+			ListView提供了add，remove，move。populate，displaced几种场景的过渡动画效果，你可以通过设置相应的属性来改变特定场景对应的过渡动画。这些场景对应的属性，类型都是Transition，一个场景也可能有多个属性，比如新增Item会触发add过渡动画，
+				同时也可能引起其他Item的位置变化，进而触发addDisplaced或dispalced过渡动画。
+			add
+				add属性指定向ListView新增一个Item时针对该Item应用的过渡动画，但ListView第一次初始化或者Model发生变化导致的Item创建过程并不会触发add过渡动画，而是应用populate动画。另外需要注意的是，尽量不要在add动画中改变Item的高度，因为这样
+				会引起它下面的其他Item被重新布局进而错放位置，也会带来性能上的损耗。
+				例子：BaseListView4.qml
+			dispalced
+				displaced属性用于指定通用的，由于Model变化导致Item移位时的动画效果，而相应的addDisplaced、moveDisplaced、removeDisplaced则用于指定由特定的add、move、remove操作引起的移位动画。如果你同时指定了displaced和***Displaced，那***Displaced生效；
+					如果你只指定displaced，那只要有移位发生，displaced动画就会被应用。
+			remove
+				remove属性指定将一个Item从ListView中移除时应用的过渡动画。当动画开始执行时，Item已经被移除，此时任何对该Item的引用都是非法的。移除一个Item可能会导致其他Item移位，此时会触发removeDisplaced或displaced过渡动画。
+			move
+				move属性指定移动一个Item时要应用的过渡动画，移动一个Item会导致其他Item移位，进而触发moveDisplaced或displaced动画。
+			populate
+				populate属性指定一个过渡动画，在ListView第一次实例化或者因Model变化而需要创建Item时应用。
+			
+			dispalced、remove、move、populate：例子：BaseListView5.qml
+			
+			{section
+				所谓view section，其实就是根据model内数据的role-name来给Item分组。比如之前的手机列表示例，可以根据制造商来分组，苹果一组，三星一组，小米一组，华为一组。
+				ListView的section复合属性可以用来描述分组的规则，显示策略等。
+				section.property属性指明分组的依据，它对应数据的role-name，比如我们的示例可以这么设定：section.property:"manufacturer"
+				section.criteria指定section.property的判断条件，有ViewSection.FullString(默认)和ViewSection.FirstCharacter两种，即全串匹配和首字母匹配。匹配时不区分大小写。
+				section.delegate用来设定一个Component，决定如何显示每个section。
+				section.labelPositioning决定当前或下一个section标签的显示策略。它可以是下列枚举值中的一个：
+					ViewSection.InlineLabels,这是默认方式。分组标签嵌入到Item之间显示。
+					ViewSection.CurrentLabelAtStart，当view移动是，当前分组的标签附着在view的开始。
+					ViewSection.NextLabelAtEnd,当view移动时，下一个分组标签附着在view的尾端。
+					这个选项会降低性能，尽量避免使用。
+				ListView内的每个Item都有一些与section相关的附加属性，名字分别是ListView.section、ListView.previousSection、ListView.nextSection。
+				需要注意的是，对ListView分组并不会引起ListView自动按分组来整理Item的顺序。如果ListView的model内的数据没有按分组顺序编排，比如说Samsung和Apple的手机在model内交替出现，那么ListView则可能显示多个相同的section。
+				例子：BaseListView6.qml
+			}
+		}
+		
+		{XmlListModel的用法
+			XmlListModel用于从XML数据中创建一个只读的model，它可以作为各种view元素的数据源，比如ListView,GridView,PathView等；也可以作为其他和model交互的元素的数据源。
+			{XPath
+				XPath是一门在XML文档中查找信息的语言，它使用路径表达式在XML文档中进行导航，这也是它名字的由来。XPath使用简洁的，非XML的语法来简化它在URI和XML属性值中的使用。
+				XPath使用路径表达式来选取XML文档中的节点或节点集。这些路径表达式和我们在常规的电脑文件系统中看的表达式非常相似。
+				在XPath中，有7中类型的节点：元素，属性，文本，命名空间，处理指令，注释以及文档节点(或称为根节点)。XML文档是被作为节点树来对待的。树的根被称为文档节点或根节点。
+				看一个XML文档例子：
+				<?xml version="1.0" encoding="utf-8">
+				<videos>
+					<video date = ‘2013-11-19’>
+						<attr tag='导演'>小宋</attr>
+						<attr tag='演员'>小宋</attr>
+						<attr tag='评分'>9.2</attr>
+						<attr tag='简介'>小宋成长历险记</attr>
+						<poster img='http://www.baidu.com'/>
+						<page link='http://v.youku.com'/>
+						<playtimes>12184709</playtimes>
+					</video>
+				<videos>
+								最常用的路径表达式
+				表达式					描	述
+				modename				选取此节点的所有子节点
+				/						从根节点选取
+				//						选取文档中与modename匹配的所有节点，而不考虑这些节点的位置
+				.						选取当前节点
+				..						选取当前节点的父节点
+				@						选取属性
+							
+							实际的XPath路径表达式
+				路径表达式					描	述
+				videos						选取videos元素的所有子节点
+				/videos						选取根节点
+				videos/video				选取属于videos的子节点的所有video元素
+				//video						选取所有的video元素
+				videos//video//attr			选取videos之下的所有video节点的所有attr元素
+				//@link						选取名为link的属性
+							使用谓语的XPath
+				路径表达式							描	述
+				/videos//video[1]					选取属于videos的子节点的第一个video元素
+				/videos//video[1]/attr[last()]		选取属于videos的子节点的第一个video元素的最后一个attr元素
+				/videos//video[position()<3]		选取属于videos的子节点最前面的两个video元素
+				//video[@date]						选取所有带date属性的video元素
+				//video[@date='2013']				选取所有带date属性且其值为2013的video元素
+				//video[playtimes>100000]			选取所有video元素且其子元素playtimes的值必须大于100000
+				
+				在XPath表达式中还可以使用一些运算符，如">","=",我们在千亩的路径表达式中已经使用了，还有"+","-","*","div","<",">=","!=","or","and","mod"等。
+			}
+			
+			{XmlRole
+				在学习ListModel和ListElement时我们知道，model中的一条数据可以有多个role，每个role有role-name和role-value。XmlListModel在这点上与ListModel类似，它使用XmlRole来定义数据的一个role，如果一条数据有多个role，则可以通过多个XmlRole对象来定义。XmlRole的那么属性保存role的名字。
+				query属性是一个XPath表达式，它必须是一个相对于XmlListModel的query属性的路径，和XmlListModel中的query拼接在一起组成一个新的路径来选择XML文档中的一个活多个节点。与标准的Xpath表达式不同是，query需要指定待提取数据的类型，这是通过在表达式末尾添加一个“/type()”来实现的，比如“/string（）”代表字符串，“/number（）”代表数字。
+				isKey属性是个布尔值，它定义当前XmlRole是否是一个关键的role。关键的role会在XmlListModel的reload（）方法被调用是被更新或者添加到model中。
+			}
+			
+			{XmlListModel的属性与方法
+				source属性指定XmlListModel使用的XML文档的位置，可以是一个网络地址，也可以是本地地址。xml属性保存用于当前model的XML字符串，应当是UTF-8编码的。当同时指定xml和source时，xml生效。
+				query属性，前面介绍XmlRole时提到了，它是XPath表达式，以“/”或起始，它作为一个基础的XPath表达式，和XmlRole的query结合使用。
+				roles属性，XmlRole对象的列表，XmlListModel正是通过它们从XML文档中提取数据的。
+				count表示当前model内数据的个数。
+				namespaceDeclarations保存在XPath中使用的命名空间。
+				status表示model的当前状态，取XmlListModel.Null,XmlListModel.Ready,XmlListModel.Loading,XmlListModel.Error中的一个。如果出错，可以使用XmlListModel的errorString()方法获取出错信息。
+				progress属性表示XML文档的下载进度，real类型，从0.0到1.0，取值为1.0表示下载完成。如果是本地XML，progress会在读取数据是立即变成1.0.当下载完成后，XmlListModel开始加载数据，此时可以通过status获知数据加载状态。
+				get()方法可以得到指定索引位置的数据对象，然后可以根据role-name来访问数据。
+				reload()方法用来重新加载model，如果没有指定关键角色，所有数据都会被删除，然后model将从头构建。如果指定了关键角色，reload()只会添加或更新与关键角色匹配的数据。
+				
+			}
+			例子：BaseXmlListModel1.qml
+		}
+		
+		{C++实现QML可用的Model
+			ListView可以使用C++语言中定义的Model，XmlListModel就是C++实现(QQuickXmlListModel)然后导出到QML环境中。你可以从QAbstractItemModel或者QAbstractListModel继承来实现你自己的Model类，后者相对简单一些。
+			最简单的实现，只需要重写rowCount(),data(),rowNames()三个方法。
+			rowCount()返回Model中的数据条目个数。ListModel默认只有一列，QAbstractListModel为我们提供了columnCount()的默认实现。
+			“QVariant QAbstractItemModel::data(const QModelIndex & index,int role)”方法用来获取某一行，某个角色对应的数据。QModelIndex代表Model中所存放数据的索引，它通过行、列位置来唯一确定一个数据，对于ListModel，只需要通过row()获取行索引即可找到对应的数据条目。一个数据条目可能有多个role，比如用于显示的DisplayRole，用于鼠标悬停提示的ToolTipRole...还可以有用户自定义的role。我们实现的Model只使用用户自定义的role。
+			对于Qt Quick中的ListView，Delegate通过role-name来访问Model中的数据，当我们在QML中写下Text{text:desc;}这样的Delegate时，意味着将名字为"desc"的role对应的数据赋值给Text对象的text属性。那么，从"desc"如何找到实际的数据？这就要依赖rowNames（）函数了。
+			“QHsh<int, QByteArrat> roleNames()const”返回一个哈希表，将role与role-name关联起来。当QML中提供role-name时，那么久可以反查到role，进而以查到的role来调用data()方法，久可以获取到实际的数据。
+			如果你要从QAbstractItemModel继承，则可能需要重写更多的虚函数，
+			例子：BaseXmlListModel.qml videolistmodel.cpp videolistmodel.h
+		}
+	}
+	
+	{TableView
+		TableView就是Qt Quick为表格式呈现数据提供的组件。
+		TableView与ListView类似，相比之下多了滚动条，挑选，可调整尺寸的表头等特性。它的数据也通过Model来提供，你可以使用ListModel、XmlListModel，也可以使用C++中从QAbstractItemModel，QAbstractTableModel等继承而实现的Model。
+		例子：BaseTableView.qml
+		
+		 TableViewColumn的最后一个属性是delegate，指定一个组件用来绘制这一列，如果设置了它，这一列的单元格就会使用这个delegate，指定一个组件用来绘制这一列，如果设置了它，这一列 的单元格就会使用这个delegate来绘制，示例中没有指定，采取了默认值；在你提供的delegate中，可以访问styleDate来绘制，示例中没有指定，采取了默认值；在你提供的delegate中，
+		  可以访问styleData的部分属性来获知相关信息。styleData是TableView相关的风格数据，有很多属性。下面所列的属性可以在TableViewColumn的delegate中访问：
+			styleData.selected,当Item选中时为true。
+			styleData.value,当前Item的文本。
+			styleData.textColor,Item的默认颜色。
+			styleData.row，行索引。
+			styleData.column，列索引。
+			styleData.elideMode，列省略模式。
+			styleData.textAlignment，列文本对齐方式。
+			关于styleData附加属性可以理解成：每一个TableViewColumn实例都有一份styleData属性。
+		
+		{定制表格外观
+			通过设置itemDelegate、rowDelegate、headerDelegate等属性，可以定制表格的外观。
+			itemDelegate属性指定如何绘制每一个单元格，它的类型是Component；在itemDelegate中可以访问的styleData属性与TableViewColumn的delegate一样。下面是一个itemDelegate定义实例；
+			itemDelegate定义实例：
+			itemDelegate:Text{
+				text:styleData.value；
+				color:styleData.selected ? "red" ; styleData.textColor
+				elide:styleData.elideMode;				
+			}
+		
+			上面的ItemDelegate只有一个Text对象，它的text属性被设置为styleData.value;如果Item被选中，文本颜色用红色，否则就用styleData.textColor；文本如果现实不全，就采用styleData.elideMode指定的省略模式(在默认模式下省略号在右侧)。
+			itemDelegate并不局限于一个简单的可见Item，你可以组合多个可见元素来实现复杂的itemDelegate，比如在单元格内放置一个复选框，一个图片等。
+			TableView的rowDelegate属性指定如何绘制行背景，它的高度将决定TableViewColumn的行高。rowDelegate可以访问下列styleData属性
+				styleData.alternate,本行使用交替的背景颜色时为true。
+				styleData.selected,本行被选中时为true
+				styleData.row，本行的索引。
+				下面是一个itemDelegate实例：
+				rowDelegate:Rectangle{
+					color:styleData.selected ? root.highlight: (styleData.alternate ? root.alternateBackground: root.background);
+				}
+			在上面的rowDelegate中，我用一个Rectangle作为行背景元素，根据是否使用交替背景、是否选中为行指定了不同的背景色。
+			headerDelegate属性定义如何绘制表头，它可以访问下列styleData附加属性：
+				styleData.value,本Item的值
+				styleData.column，本列索引。
+				styleData.pressed，本列被按下(如鼠标左键按下或手指按下)时为true。
+				styleData.containsMouse，鼠标是否停在本列内。
+				styleData.textAlignment，本列文本的水平对齐放手。
+				下面是一个headerDelegate实例：
+				headerDelegate:Rectangle{
+					implicitWidth: 10
+					implicitHeight: 24
+					gradient: styleData.pressed ? root.pressG : (styleData.containsMouse ? root.hoverG: root.normalG)
+					border.width:1
+					border.color: "gray"
+					Text{
+						anchors.verticalCenter: parent.verticalCenter
+						anchors.left: parent.left
+						anchors.leftMargin: 4
+						anchors.right: parent.right
+						anchors.rightMargin:4
+						text:styleData.value
+						color: styleData.pressed ?　"red" : "blue"
+						font.bold: true
+					}
+				}
+				通过headerDelegate改了默认的表头外观，使用渐变色来填充表头背景，为鼠标按下，经过定义了不同的背景颜色和文本颜色。
+			例子：BasePhoneTableDelegate.qml
+		}
+		{动态修改TableView
+			有时可能会想给TableView添加一列(一个字段)，这时可以使用addColumn()方法，其参数是TableViewColumn，指向一个TableViewColumn实例，你可以动态创建这个实例。
+			对于前两节的示例，第三列可以这样添加进去：
+			Component.onComplete:{
+				var col = Qt.createQmlObject(import QtQuick 2.2\n import QtQuick.Controls 1.2\nTableViewColumn{role:\"manufacturer\";title:\"Manufacturer\";width:140;}",phoneModel);
+				phoneTable.addColumn(col);
+			}
+			要想在指定位置添加一列，可以使用insertColumn(index, column)方法，index参数指定列的索引，column参数与addColumn()的参数一样。
+			如果你想删除某列，可以使用romoveColumn(index)方法，指定列索引即可。
+			TableView还提供了moveView动态添加数据，则可以通过调用ListMode的append()或insert()方法实现。删除数据通过ListModel的clear()或remove()方法实现。
+		}
+	}
+	{GridView
+		GridView与ListView类似，最大的不同在于Item的呈现方式，如果你熟悉QListView，可以将ListView对齐QListView的ListMode显示模式，GridView对应IconMode显示模式。
+		GridView有一个flow熟悉，指定Item的流模式，有从左到右(GridView.LeftToRight)和从上到下(GridView.TopToBottom)两种模式，与之前讲过的Grid定位器类似。
+		与ListView类似，只要提供一个Model，一个delegate就可以正常使用GridView了。
+		例子：BaseGridView.qml
+	}
+	{PathView
+		PathView，顾名思义，沿着特定的路径显示Model内的数据。Model可以是QML内建的ListModel、XmlListModel，也可以是在C++中实现的QAbstractListModel的派生类。
+		要使用PathView，至少需要设置model,delegate,path三个属性。
+		model，delegate我们在学习ListView时已经接触过，path是PathView的专有特性，它指定PathView用来放置Item的路径。要使用PathView，先要了解Path。
+		{path简介
+			Path的属性startX、startY用于描述路径起点。pathElements属性是个列表，是默认属性，它保存组成路径的多个路径元素，常见的路径元素有PathLine、PathQuad、PathCubic、PathArc、PathCurve、PathSvg。路径上最后一个路径元素的终点就是整个路径的终点，如果终点与起点重合，那么Path的closed属性就为true。
+			路径元素除PathSvg外，都有x、y属性，以绝对坐标的形式指定本段路径的终点；而起点呢，就是前一个路径段的终点；第一个路径段的起点，就是Path的startX、startY所描述的整个路径的起点。另外还是relativeX，relativeY两个属性，以相对于起点的相对坐标的形式来指定终点。你还可以混合使用绝对坐标与相对坐标，比如使用x和relativeY来决定路径段的终点。
+			(1)PathLine
+			PathLine是最简单的路径元素，在Path的起点或者上一段路径的终点，与本元素定义的终点之间绘制一条直线。
+			一个最简的路径示例：
+			Path{
+				startX: 0;
+				startY: 0;
+				PathLine{
+					x: root.width - 1;
+					y: root.height - 1;
+				}
+			}
+			上面的路径，是一条从界面左上角到右下角的直线。
+			(2)PathQuad
+			贝塞尔曲线，又称贝兹曲线或贝济埃曲线，是应用于二维图形应用程序的数学曲线。
+			关于贝塞尔曲线和控制点，可以想象一下；起点和终点之间连着一根弹力线，控制点处放置了一个小口径抽风机，于是，弹力线努力要亲近抽风机，曲线就这样诞生了......
+			在Qt Quick的Path主题中，提供了基于二次方贝塞尔曲线和三次方贝塞尔曲线的路径元素。
+			在我们使用Canvas进行2D绘图时，Context2D对象的quadraticCurveTo(real cpx, real cpy,real x, real y)方法可以在路径中添加一条二次方贝塞尔曲线，bezierCurveTo(real cp1x,real cy1y, real cp2x, real cp2y,real x, real y)方法用来在路径中添加一条三次方贝塞尔曲线。
+			PathQuad元素定义一条二次方贝塞尔曲线作为路径段。它的起点为上一个路径元素的终点(或者路径的起点)，终点由x,y或relativeX，relativeY定义，控制点由controlX，controlY或relativeControlX、relativeControlY来定义。
+			一个简单的二次方贝塞尔路径定义：
+			Path{
+				startX: 0
+				startY: 0
+				PathQuad{
+				x: root.width - 1;
+				y: root.height - 1
+				controlX: 0
+				controlY: root.height - 1
+				}
+			}
+			例子：BasePathQuad.qml
+			(3)PathCubic
+			PathCubic定义一条三次方贝塞尔曲线，他有两个控制点，
+			例子:BasePathCubic.qml
+			(4)PathArc
+			PathArc路径元素定义椭圆上的一条弧线，它的起点为上一个路径元素的终点(或者路径的起点)，终点由X,y或relativeX,relativeY定义。椭圆的两个半轴分别由radiusX、radiusY定义。
+			direction属性定义绘制弧线的方向，默认取值PathArc.Clockwise，顺时针绘制弧线；要想逆时针绘制弧线，需要设置direction的值为PathArc.Counterclockwise。
+			当你指定了弧线的起点，终点，半径，绘制方向后，还是可能存在两条弧线都能满足给的的参数，此时useLargeArc属性就可以派生用场了，其默认值为false，取较小的弧线，设置为true后，取较大的弧线。
+			Path{
+				startX: 0
+				startY: 100
+				PathArc{
+					x:100
+					y:200
+					radiusX: 100
+					radiusY:100
+					direction: PathArc.Clockwise
+				}
+			}
+			(5)PathCurve
+			PathCurve定义一条Catmull-Rom曲线。
+			例子：BasePathCurve.qml
+		}
+		{PathAttribute
+			PathAttribute定义一些属性，它的声明语法类似于下面这样：
+			PathAttribute{name: "zOrder"; value: 0.2;}
+			name属性指定待定义属性的名字，real类型的value属性的值为待定义的属性的值。
+			PathAttribute放在某个路径段的前面，知名这段路径起始时的属性值；路径段后面的PathAttribute指明路径段终止时的属性值；而在路径段上的属性值，Path会根据起、止值自动插值计算。
+			我们可以通过使用PathAttribute来定义一些属性，用于控制分布在路径上的Item的外观。比如定义名为“zOrder”的属性，控制沿路径分布的Item的Z序。
+			下面是一个简单的示例，在路径声明时使用了PathAttribute：
+			Path{
+				startX: 10
+				startY: 100
+				PathAttribute {name: "zOrder"; value: 0}
+				PathAttribute {name: "itemAlpha"; value: 0.1}
+				PathAttribute {name: "itemScale"; value: 0.6}
+				PathLine{
+					x:root.width/2 - 40
+					y: 100
+				}
+				PathAttribute {name: "zOrder"; value: 10}
+				PathAttribute {name: "itemAlpha"; value: 0.8}
+				PathAttribute {name: "itemScale"; value: 1.2}
+				PathLine{
+					relativeX:root.width/2 - 60
+					relativeY: 0
+				}
+				PathAttribute {name: "zOrder"; value: 0}
+				PathAttribute {name: "itemAlpha"; value: 0.1}
+				PathAttribute {name: "itemScale"; value: 0.6}
+			}
+			把路径分成了两段，起点是(10,100)。为路径定义了三个属性，jizOrder、itemAlpha、itemScale，在PathView的delegate中会用到这些属性。以zOrder属性为例，起点处值为0，中间值1，终点值为0，其他的，Path会自动根据两段的值来生成。
+			PathAttribute定义的属性，会到处为delegate的顶层Item的附加属性，通过PathView.${name}的形式来访问。比如zOrder属性，在delegate中使用PathView.zOrder访问。
+			
+		}
+		{PathPercent
+			PathPercent放在组成路径的元素后面，比如放在PathLine后面，指明它前面的那部分路径(通常由一个或多个Path元素组成)所放置的Item数量占整个路径上所有Item数量的比率。
+			PathPercent的value属性为real值，范围是0.0~1.0.需要注意的是，在一个Path中使用PathPercent，PathPercent元素的value是递增的，某一段路径如果在两个PathPercent之间，那么这段路径上面放置的Item数量占路径上总Item数量的比率，是它后面的PathPercent
+			与它前面的PathPercent的value之差。
+			下面的路径定义使用到了PathPercent:
+			Path{
+				startX: 100
+				startY: 100
+				PathLine{
+					x: root.width/2 - 40;
+					y: 100;
+				}
+				PathPercent{value: 0.28}
+				PathLine{
+					relativeX: root.width/2 - 60
+					relativeY: 0;
+				}
+			}
+			第一个路径段上放置的Item数量占路径上总Item数的28%，结合实例会看到左边矩形稀疏。右边紧凑这样的效果。
+		}
+		{使用PathView
+			了解了Path、PathAttribute及PathPercent等对象，咱们再来看PathView。
+			像ListView一样，PathView有一个count属性，保存PathView要显示的Item总数。另外，PathView还有一个pathItemCount属性，指定在路径上可见的Item数量，他可以与count不同。
+			perferredHighliBegin和preferredHighlightEnd属性的值是real类型的，范围是0.0~1.0。preferredHighlightBegin指定当前Item在view中的首选起始位置，preferredHighlightEnd指定当前Item在view中的首选结束位置。与它们相关的，还有一个highlightRangeMode属性，
+				可以取值PathView.NoHighlightRange,PathView.ApplyRange或PathView.StrictlyEnforceRange。比如想严格地将当前Item限制在路径的中央，可以设置hightlightRangMode为PathView.StrictlyEnforceRange,设置preferredHighlightBegin和preferredHighlightEnd都为0.5.
+			highlight属性指定为当前Item绘制高亮效果的组件。	
+			PathView像Flickable一样，当用户拖动view时，具有弹簧效果。interac属性设置为true，用户就可以拖动PathView，如果产生了弹动，flicking会变为true。flickDeceleration属性设置弹簧效果的衰减速率，默认值为100.
+			decrementCurrentIndex(),incrementCurrentIndex()两个方法可以递减、递增PathView维护的当前Item的索引。这两个函数有循环效果，如果你不需要，可以自己修改currentIndex属性来实现你的逻辑。
+			PathView还向delegate导出了isCruuentItem(布尔值)、onPath(布尔值)、view三个附加属性。在delegate的顶层Item内使用PathView.isCurrentItem可以获知本Item是否为PathView的当前Item；使用PathView.onPath则可以知道本Item是否在路径上；PathView.view则指向Item所属
+				的PathView实例，你可以通过它来访问PathView的方法，属性，信号等。
+			例子：BasePathView.qml
+		}
+	}
+	{Repeater
+		Repeater是一个非常特别又非常好用的类，它用来创建多个基于Item的组件，扔给他的父(通常是定位器或布局管理器)来管理。这是Repeater和ListView等类的一个显著不同，ListView是自我满足的，又生娃又养娃，而Repeater光生不养。
+		Repeater有三个属性，count指示它创建了多个基于Item的对象，model指定数据模型，delegate是待实例化的组件。delegate是默认属性，在定义Repeater对象时通常不显式初始化。
+		itemAt(index)方法根据索引返回对应的delegate实例。
+		Repeater对象会在自己实例化后一次性地创建由model决定的所有Item，这在某些情况下可能会被认为效率低下。比如model提供了10000个数据，Repeater就实例化10000个delegate组件。
+			如果你对这个敏感，可以使用ListView，它创建Item是渐进式的，一开始只创建少量的Item，足够界面显示，当用户滚动ListView，那些原本不可见的Item要被显示时才会适时创建。
+		model属性可以取下列值：
+			数字
+			字符串列表
+			对象列表
+			ListModel等常见的model。
+		{model为数字
+			model为数字时指示Repeater创建特定数量的组件，此时在delegate组件内可以访问index属性。
+			例子:BaseRepeaterNumber.qml
+		}
+		{model为字符串列表
+			当使用字符串列表作为model，Repeater创建的Item数量由列表长度决定，在delegate内可以通过modelData访问字符串对象
+			例子：BaseRepeaterString.qml
+		}
+		{model为对象列表
+			使用对象列表作为model与使用字符串列表类型，只是modelData代表model中的对象。
+			例子：BaseRepeaterObject.qml
+		}
+		{model为ListModel
+			model也可以是ListModel或者QAbstractItemModel的派生类。此时在delegate内可以通过role-name访问model内的数据。
+			例子：BaseRepeaterListModel.qml
+		}
+	}
+	{ListView的下拉刷新效果
+		例子：工程ListView
+	}
+}
+{多媒体
+	{MediaPlayer ，注意音频文件太大加载不出来，一般2M左右可以加载出来
+		MediaPlayer是QML提供的核心多媒体类，可以播放音频，视频。
+		要使用MediaPlayer，需要引入QtMultimedia模块，在QML文档的开始加入"import QtMultimedia 5.0"语句。QML的MediaPlayer是Qt C++中多媒体框架在QML环境中的代言人，
+			假如以Qt QuickApp为模板创建项目，你还需要在pro文件中加入语句：QT += multimedia。
+		{播放音乐
+			source属性指定了要播放的文件，它的类型是url，它能接受绝对路径，相对路径，有效的http链接。
+			autoPlay属性设置为true，指示MediaPlayer对象创建后立即开始播放。
+			也可以在合适的时候调用MediaPlayer的play()方法。
+			如果你想知道音乐的时长，访问duration属性，它是整型值，单位是毫秒，实现onDurationChanged信号处理器，可以取到时长。
+			如果你还想知道播放进度，可以访问position属性，它是整型值，单位是毫秒，实现一个onPositionChanged信号处理器，就可以实时显示进度。
+			调用pause()方法暂停播放，调用stop()方法停止播放。而播放状态变化时，会发出playbackStateChange()信号，在onPlaybackStateChange信号处理器内，可以读取枚举类型的
+				playbackState属性，它取MediaPlayer.PlayingState、MediaPlayer.PausedState、MediaPlayer.StoppedState三个值中的一个。
+			seekable属性指示媒体是否支持seek，当它为true时，你就可以调用seek(offset)方法来定位播放器了。参数offset是相对于当前位置的偏移量，单位是毫秒。
+				注意，操作可能是异步的，当方法返回时position属性不一定会立即变成新的。
+			静音可以通过muted属性读取，设置，音量通过volume属性读取、设置。
+			例子: BaseSimpleMusic.qml
+		}
+		{视频
+			播放视频比音乐稍稍复杂一些，需要使用VideoOutput元素与MediaPlayer配合。VideoOutput用来渲染视频，也可以作为相机的取景器(预览窗口)，最简单的用法是，你只需要将其source属性
+				指向一个MediaPlayer对象即可。
+		}
+	}
+}
+
+{网络 
+	{XMLHttpRequest类介绍
+		readyState
+		readyState属性保存HTTP请求的状态。XMLHttpRequest对象刚创建时，这个属性的值从0开始，直到接收到完整的HTTP响应，这个值增加到4.
+					XMLHttpRequest对象的状态
+		状态	名称				描述
+		0		Uninitialized		初始化状态，XMLHttpRequest对象已创建或已被abort()方法重置
+		1		Open				open()方法已调用，但是send()方法未调用，请求还没有被发送
+		2		Sent				send()方法已调用，HTTP请求已发送到Web服务器。未接收到响应
+		3		Receiving			所有响应头部都已经接收到。响应体开始接收但未完成
+		4		Loaded				HTTP响应已经接收完毕
+		readyState的值不会递减，除非你调用abort()或open()方法终止了一个正在处理的请求。每个这个属性的值增加的时候，都会触发onreadystatechange回调
+		
+		responseText
+		这个属性保存到目前为止从服务器接收到的响应体(不包括头部)。没收到数据时是空字符串。
+		如果readyState小于3，这个属性就是一个空字符串。当readyState为3时，这个属性返回目前已经接收的响应部分。如果readyState为4，这个属性保存了完整的响应体(body)。
+		如果HTTP头部指定了响应体(body)的字符编码；数据就使用该编码；否则就假定文本内容使用UTF-8编码。
+		
+		responseXML
+		XMLHTTPRequest会判断收到的数据是否为XML格式，如果是，则将其解析为一个DOM对象，保存到responseXML属性中；如果不是XML格式的数据或者在解析XML的过程中发生错误，responseXML属性的值为null。
+		
+		status
+		由服务器返回的HTTP状态码，如200表示成功，而404表示"Not Found"错误。当readyState小于3时读取这个属性可能会导致异常。
+		
+		statusText
+		HTTP状态码对应的文本描述，比如状态码200对应“OK”，404对应"Not Found"。你应当在readyState大于或等于3时读取它。
+		
+		现在来了解XMLHTTPRequest的方法
+		
+		onreadystatechange
+		这个蹩脚的家伙，咱先说它。它是个回调函数，每次readyState属性改变时都会调用它。当readyState为3时，它也可能被调用多次。
+		
+		open()
+		open()方法用于初始化HTTP请求参数，但并不发送请求。其函数原型如下：
+		open(method, url, async, username, password)
+		method参数是个字符串，指定HTTP方法，可以是GET、POST、HEAD。
+		url参数指定地址，字符串，形如"http://www.baidu.com:80/xxx.asp".
+		async是个布尔值，取false时请求是同步的，后续对send()的调用将阻塞，直到响应完全接收。如果这个参数是true或省略。请求是异步的，此时你需要设置
+			onreadystatechange回调来获知请求何时完成。
+		username和password参数是可选的，URL需要授权访问时你就得提供。
+		
+		setRequestHeader()
+		HTTP协议定义了很多头部，比如User-Agent、Content-Type、Accept-Encoding等，你可以在open()之后。send()之前调用这个方法设置必要的头部。
+		函数原型如下：
+		setRequestHeader(name, value)
+		name指定要设置的头部名称，value指定头部对应的值(不能有换行)
+		
+		send()
+		send(body)方法用于发送HTTP请求，open()和setRequestHeader()两个方法组装HTTP头部，send()是真正干大事儿的，它连接服务器，发送组装好的头部和body参数指定的数据。
+		body只用在open()指定了POST、PUT方法时才有效，它可以使一个字符串或者一个DOM对象，当使用GET方法或者没有数据要发送时，应当传递null给它。
+		
+		abort()
+		这个方法重置XMLHTTPRequest对象的状态，readyState归0，并且取消所有的网络活动。例如，如果请求用了太长时间，用户是个急性子等不起，你就可以调用它。
+		
+		getResponseHeader()
+		这个方法返回指定的HTTP头部的值，请在readyState大于等于3时调用它。函数原型如下：
+		getResponseHeader(name)
+		name指定头部名字，是个字符串，不区分大小写。
+		要是指定的头部没收到(比如服务器没法送)，这个方法返回一个空串。
+		
+		getAllResponseHeaders()
+		这个方法返回原始的HTTP头部信息，头部作为单个的字符串返回，一行一个头部，每行用换行符"\r\n"隔开。请在readyState大于等于3时调用它。
+	}
+}
+
+{动画 Animation
+	{动画元素分类
+		PropertyAnimation(属性动画),可以改变各种类型property来产生动画效果。
+		NumberAnimation（数字动画）,PropertyAnimation的派生类，专门改变数字类型的property来产生动画，效率相比PropertyAnimation更好。
+		ColorAnimation（颜色动画），PropertyAnimation的派生类，专门改变color类型的property来产生动画，效率相比PropertyAnimation更好。
+		RotationAnimation（旋转动画）,PropertyAnimation的派生类，专门改变rotaion值，效率相比PropertyAnimation更好，另外还提供旋转方向等附加特性。
+		Vector3dAnimation（3D容器动画）,PropertyAnimation的派生类，在一个Vector3d值发生变化时使用。
+		PathAnimation（路径动画），让对象沿一个给定的路径运动。
+		SmoothedAnimation（平滑动画），允许一个property跟踪一个值，产生平滑动画。
+		SpringAnimation（弹簧动画）,允许一个property跟踪一个值，动画效果类似于弹簧运动。
+		Qt Quick还提供了用于组合多个动画对象的分组动画对象。
+		SequentialAnimation（顺序动画）,顺序执行一系列动画。
+		ParallelAnimation,（并行动画）并行执行一系列动画。
+		除了上面提到的动画对象，还有一些对象虽然本身不是直接的动画元素，但却是有些QML Item能够动起来的基础，称之为动画搭档。
+			State，Item的状态，衔接Item的状态和动画，使状态变化过程平滑。
+		还有一些动画元素，需要与其他动画对象结合才能产生较好的效果，称之为协同动画元素
+			Behavior,为Item的property变化绑定一个默认的动画对象。
+			ParentAnimation（父元素动画）,在改变一个Item的parent时使用，是的该Item从旧parent移动到新parent的过程更平滑，通常与Transition、State、ParentChange联合使用。
+			AnchorAnimation（锚定动画），在改变一个Item的parent时使用，平滑变化过程，通常与Transition、State、ParentChange联合使用。
+			PauseAnimation（停止动画），在动画过程中插入它，可以将动画过程暂停一段时间。
+			PropertyAction属性动作）- 在播放动画时改变属性
+			ScriptAction（脚本动作）,在播放动画时运行脚本
+	}
+	
+	{基本动画元素
+		Animation是Qt Quick中所有动画类的基类，它具有下列属性：
+			running,布尔值，指示动画是否在运行。默认是false。设置为true会启动动画，为false会停止动画。你可以读取它的值来判断动画当前是否在运行，也可以给它绑定一个表达式，
+				当表达式的值为true时，动画会自动执行。start()方法会置其为true，stop()方法会置其为false。
+			loops.动画的执行次数，默认值是1；给它赋值Animation.Infinite会导致动画循环执行永不停歇。
+			paused,布尔值，指示动画是否被暂停，默认不暂停。调用pause()方法会置其为true，stop()方法会置其为false。
+			alwaysRunToEnd,布尔值，默认值为false。它指示在显式的通知动画停止时是否把动画过程执行完。如果设置为true，那么即便你调用stop()或者设置running为false，动画都会自顾自地执行完。
+		Animation有下列方法：
+			start(),启动一个动画，如果一个动画已经在执行，它什么也不干。
+			stop(),终止一个动画，如果动画没有执行完，那么动画操作的属性可能就是某个中间值，而不是目标值，当然要是你设置了alwaysRunToEnd,情况会有所不同，要是调用stop()时动画没有在运行，他什么也不干。
+			restart(),等同于先调用stop()在调用start().
+			pause(),暂停一个动画，如果动画已经暂停，他什么也不干。
+			resume(),与pause()对应，让一个动画继续执行。如果一个动画没有被暂停或者不在运行状态，他什么也不干。
+			complete(),完成一个动画。如果动画执行到某个中间步骤，这个调用会让动画直接跳到结束状态。动画要改变的property都会抵达目标状态。它会把running属性置为false。如果动画不在运行状态，什么也不干。
+		Animation有下列信号：
+			started(),动画开始时触发。注意，只有单独的顶层动画对象才会触发这个信号，如果一个动画对象处于某个动画分组中，在一个Behavior中或者在一个Transition中，都不会触发这个信号。
+			stopped(),动画(手动或自动执行完毕)进入停止状态时触发。与started()信号一样，只有单独的顶层动画对象才会触发这个信号。
+		了解了Animation对象，现在我们知道怎样启动一个动画了：
+			调用start()方法。
+			设置running为true。
+			为running绑定一个表达式，表达式求值结果为true。
+		我们也知道如何停止一个动画了：
+			调用stop()方法。
+			设置running为false。
+			触发running绑定的表达式重新求值且返回值为false。
+			调用complete()方法。
+	}
+	
+	{PropertyAnimation是Animation的派生类，它通过改变对象的property来实现动画，基本上你能在Qt SDK中找到的Item property它都可改变，像NumberAnimation、ColorAnimation、RotationAnimation、Vector3dAnimation等都是它的子类。
+		
+		easing//容位
+			easing.type : enumeration	//各种不同的路径
+			{
+				Easing.Linear
+				Easing.InQuad
+				Easing.OutQuad
+				Easing.InOutQuad
+				Easing.OutInQuad
+				Easing.InCubic
+				Easing.OutCubic
+				Easing.InOutCubic
+				Easing.OutInCubic
+				Easing.InQuart
+				Easing.OutQuart
+				Easing.InOutQuart
+				Easing.OutInQuart
+				Easing.InQuint
+				Easing.OutQuint
+				Easing.InOutQuint
+				Easing.OutInQuint
+				Easing.InSine
+				Easing.OutSine
+				Easing.InOutSine
+				Easing.OutInSine
+				Easing.InExpo
+				Easing.OutExpo
+				Easing.InOutExpo
+				Easing.OutInExpo
+				Easing.InCirc
+				Easing.OutCirc
+				Easing.InOutCirc
+				Easing.OutInCirc
+				Easing.InElastic
+				Easing.OutElastic
+				Easing.InOutElastic
+				Easing.OutInElastic
+				Easing.InBack
+				Easing.OutBack
+				Easing.InOutBack
+				Easing.OutInBack
+				Easing.InBounce
+				Easing.OutBounce
+				Easing.InOutBounce
+				Easing.OutInBounce
+			}
+			easing.amplitude : real
+			easing.overshoot : real
+			easing.period : real
+		easing.bezierCurve : list<real>
+		例子：BasePropertyAnimation.qml
+				BasePropertyAnmaion1.qml
+				BasePropertyAnimation2.qml
+				BasePropertyAnimation3.qml
+				BasePropertyAnimation4.qml
+	
+	}
+	
+	{NumberAnimation是PropertyAnimation的派生类，专门处理数字类型的property，它重写了from和to两个属性，将其类型设置为real。
+		例子：BaseNumberAnimation.qml
+	}
+	
+	{ColorAnimation是PropertyAnimation的派生类，专门处理color类型的property，它重写了from和to两个属性，将其类型设置为color。
+		例子：BaseColorAnimation.qml
+	}
+	
+	{RotationAnimation是PropertyAnimation的派生类，专门处理rotation和angle，它重写了from和to两个属性，将其类型设置为real。
+		RotationAnimation新增了一个direction属性，可以取下列值：
+			RotationAnimation.Numerical，默认值，在from和to两个角度之间做线性插值进行旋转，比如from=10,to=100，那就顺时针旋转90°。
+			RotationAnimation.Colockwise,在两个角度之间顺时针旋转。
+			RotationAnimation.Counterclockwise,在两个角度之间逆时针旋转。
+			RotationAnimation.Shortest,选取两个角度之间的最短路径进行旋转，比如from=10，to=350，那结果将是逆时针旋转20°。
+		使用RotationAnimation时不需要指定property属性。
+		RotationAnimation在旋转一个Item时以Item的transformOrigin属性指定的点为中心，这个属性为枚举类型，默认值是Item.Center.它还是可以是Item.Top,Item.TopRight,
+			Item.TopLeft,Item.BottomLeft,Item.BottomRight,Item.Bottom,Item.Left,Item.Right.\
+		例子：BaseRotationAnimation;
+	}
+	
+	{PathAnimation是从Animation继承而来的，它让目标对象沿着一个既定的路径运动。像PropertyAnimation一样，它也有一个easing属性，请参考PropertyAnimation的说明。
+		anchorPoint属性描述目标对象的哪个点锚定在路径上，比如目标是一个正方形，你可以加设置中心点或左上角与路径锚定。默认是左上角。你可以使用"x，y"或者Qt.point()构造一个Point对象赋值给anchorPoint.
+		orientation属性控制目标对象沿着路径运动时的旋转策略，它可以取下列值：
+			PathAnimation.Fixed,orientation的默认值，在运动过程中保持物体方位不旋转。
+			PathAnimation.RightFirst，旋转目标对象时努力使目标对象的右侧贴合路径。
+			PathAnimation.LeftFirst，旋转目标对象时努力使目标对象的左侧贴合路径。
+			PathAnimation.BottomFirst，旋转目标对象时努力使目标对象的底部贴合路径。
+			PathAnimation.TopFirst，旋转目标对象时努力使目标对象的顶部贴合路径。
+		如果你指定了orientation属性，一开始时目标对象的方向和设定值不符合，PathAnimation就会旋转目标对象以便指定的边贴合路径，而orientationEntryDuration属性用于设定完成这个旋转的时间周期。
+		如果你指定了orientation属性，而目标对象在到达路径末端时的旋转角度和你期望的不符，则可以设置endRotation属性类指定一个角度，那么当目标对象抵达路径末端时会自动调整旋转角度为
+			指定的endRotation。此时如果你设置了orientationExitDuration属性，旋转过程就会以动画的形式完成，否则就会发生一个跳变。
+		最后要说patn属性了，类型就是Path，这就是你要构造的路径。
+		
+		例子：BasePathAnimation.qml
+			
+	}
+	
+	{SmoothedAnimation
+		SmoothedAnimation是NumberAnimation的派生类，它默认将easing.type设置为Easing.InOutQuad,在from和to之间产生平滑的动画效果。
+		duration属性设置动画周期，单位是毫秒。默认值是-1，禁用duration模式。
+		velocity设置速率，默认速率是200units/秒。将velocity设置为-1禁用速率。如果from和to的距离很短，SmoothedAnimation会自行调整velocity来适应。
+		当duration和velocity同时设置时，SmoothedAnimation会根据from、to之间的距离和速率计算出按照速率完成动画所需的时间，拿这个时间与duration比较，如果duration短就使用duration，否则使用velocity。
+		例子：BaseSmoothed.qml.qml
+	}
+	
+	{SpringAnimation
+		SpringAnimation模仿弹簧的震荡行为。
+		spring属性用来控制动画的加速度，0~5.0之间的取值时有意义的，默认值为0.
+		damping属性代表衰减系数，其值越大振荡就会越快平复，0~1.0之间的值比较有意义，默认值为0.
+		epsilon允许你设定一个最接近0的阈值来代表0，如果是基于像素位置的动画，0.25是一个比较合适的值；如果是基于scale的动画，那可以0.005比较合适。默认值是0.001.调整epsilon可能会带来一定的性能提升。
+		velocity属性设定动画的最大速率，默认值为0.
+		例子：BaseSpringAnimation.qml
+	}
+	
+	{组合动画
+		ParallelAnimation和SequentialAnimation允许我们把多个动画元素组合在一起来执行。ParallelAnimation中定义的多个动画对象会并行执行，而SequentialAnimation中定义的多个动画对象会一个个顺序执行。
+		{ParallelAnimation
+			ParallelAnimation从Animation继承而来，没有添加额外的属性，它本身单独使用没有意义，不产生动画效果。你只需要在声明ParallelAnimation对象时在其中定义多个子动画对象，ParallelAnimation开始运行时就会并行执行它们。
+			例子：BaseParalelAnimation.qml
+		}
+		{SequentialAnimation
+			SequentialAnimation与ParallelAnimation类似，不同之处是它的子动画对象时一个个顺次执行的。动画对象的定义方法和PropertyAnimation元素类似。
+			例子：BaseSequentialAnimation.qml
+		}
+	}
+	
+	{State
+		很多用户界面由状态驱动，根据应用场景，针对特定的状态显示不同的界面。
+		在QML中，状态时定义在State类型中的一系列属性配置。不同的配置可能有不同的作用：
+			显示一些UI组件，隐藏另一些。
+			想用户呈现不同的操作和功能。
+			启动，暂停，停止动画。
+			在某种新的状态下执行某些脚本。
+			改变某个特定Item的property的值。
+			显示一个不同的view或screen。
+		例子：BaseState.qml
+		Item有一个state属性，时字符串类型，它保存Item的当前状态的名字，如果你没有设置过Item的状态，它默认就是空串。你可以打印它的值来查看Item的当前状态。你可以设置state的值来改变Item的状态，如果给它一个空串，Item就会返回默认状态。
+		Item还有一个states属性，保存为这个Item定义的所有状态，它的类型是list<State>.可以看到，它是一个列表，列表中的每个State对象代表一种状态。
+		State类型对应的C++类型是QQuickState，它有这么几个属性：
+			name，字符串，保存状态的名字。你为某个Item定义的每种状态的名字，在Item范围内都应该是唯一的。
+			when，布尔值，它描述状态在什么时候应用。它应该被绑定到一个ECMAScript表达式上，当这个表达式返回结果为true是应用本状态。
+			extend，字符串，指向当前状态的“基态”的名字，所谓“基态”，类比C++中的基类概念。基态的所有变化都会被派生态继承。
+			changes，类型是list<Change>,一个列表，保存应用于这种状态的所有变化。这是State的默认属性。Change对应于C++类QQuickStateOperation。
+		State的changes属性保存Change对象的列表，当进入一种状态后，这个列表中的Change对象会顺次执行。Qt Quick提供了多种Change对象
+		总结一下，应用一种状态有两种方式：
+			显式改变Item的state属性。
+			将State的when属性绑定到一个表达式上。
+		State对象必须与它的拍档Change对象一起使用才有实际意义。提供了下面几种可用于State的Change对象：
+			PropertyChanges，用来改变一个对象的属性，对应的C++类为QQuickPropertyChanges，是QQuickStateOperation的派生类。
+			ParentChange,用来改变一个对象的富，对应的C++类为QQuickPrentChange，是QQuickStateOperation的派生类。
+			AnchorChanges，用来改变一个对象的锚布局参数，对应的C++类为QQuickAnchorChanges，是QQuickStateOperation的派生类。
+			StateChangeScript，用来执行一个ECMAScript脚本，对应的C++类为QQuickStateChangeScript，是QQuickStateOperation的派生类。
+		PropertyChanges对象来改变文本的颜色和字体。其中对应鼠标按下的State对象时这么定义的：
+			State{
+				name：“blueText”
+				when：mouseArea.pressed;
+				PropertyChanges{
+					target:centerText;color:"blue";
+					font.bold:true; font.pixelSize:32;}
+				}
+			这个名为“blueText”的对象内声明了一个PropertyChanges对象，用来改变centerText的某些属性。
+			PropertyChanges对象有一个target属性，指向要改变的目标对象，在我们的示例中，指向id示centerText的Text对象，其余的代码就是改变centerText的color，font属性，与声明Text对象时的用法一样。target属性的初始化语句和修改目标对象的语句之间没有必然的先后关系。
+			PropertyChanges的restoreEntryValues属性也是个布尔值，用于指定离开本状态时是否将本状态改变的那些属性的值重置为进入本状态之间的值。默认值ture，假如设置这个属性为false，name这种状态对目标对象的改变将是持久的。
+			PropertyChanges设定目标对象的属性是，可以使用静态的值，也可以使用表达式。如果使用表达式，则默认会将表达式和属性绑定。explicit可以修改这种行为，它的默认值是false，如果你把他置为true，那么任何可能的表达式绑定都将被视作一次性的赋值行为。
+			例子：BaseStateRect.qml
+		ParentChange
+			ParentChange用来改变一个对象的parent。它具有下列属性：
+			target，指定要操作的目标对象。
+			parent，指定目标对象的新parent。
+			x，指定目标对象相对于新parent的x位置
+			y，指定目标对象相对于新parent的y位置
+			width，指定目标对象的宽度
+			height，指定目标对象的高度。
+			roration，指定目标对象的旋转角度。
+			scale，指定目标对象的放大系数。
+			上面这些属性，除了target和parent的类型是Item，其他的都是real。
+			
+			需要注意的时，对于ParentChange对象，你只能使用它定义的那几个属性，否则会报错。
+			例子：BaseParentChange.qml
+		AnchorChanges
+			AnchorChanges用来改变一个Item的锚布局属性，。它支持下列属性：
+			target，指向目标对象。
+				anchors.left
+				anchors..right
+				anchors.top
+				anchors.bottom
+				anchors.horizontalCenter
+				anchors.verticalCenter
+				anchors.baseline
+			AnchorChanges不能改变一个Item的锚布局留白，不过你可以使用PropertyChanges改变它们。
+			例子：BaseAnchorsChanges.qml
+		StateChangeScript
+			StateChangeScript允许你在状态变化时执行ECMAScript脚本。它有两个属性，一个是name，表示脚本的名字，这个名字可以被ScriptAction对象引用，以便复用这里的脚本代码：一个是script，代表这里的脚本代码。
+			例子：BaseStateChangeScript.qml
+	}
+	
+	{Transition
+		假如你要从A地去往B地，Transition会给你选择，做动车，绿皮火车，绿皮火车，大巴，自驾还是飞机。
+		简而言之，过渡将动画引入到两种状态之间，消除状态突变。
+		当一个Item从一个State切换到另一个State时，Transiton定义的动画会自动在两个State之间运行，从来消除状态间的突变，使得迁移更加平滑。
+		Item的transitions属性是个列表，保存为这个Item定义的所有Transition。你可以为Item定义一个或多个Transiton。只需这样:
+		Item{
+			...
+			transitions:Transition{
+				NumberAnimation{properties:"x,y"; duration: 2000}
+			}
+			...
+		}
+		或者这样
+		Item{
+		...
+			transitions:[
+				Transition{
+					from: "stateA"
+					to: "stateB";
+					NumberAnimation{properties:"x,y"; duration: 2000}
+				},
+				Transition{
+					from: "stateB"
+					to: "stateA";
+					NumberAnimation{properties:"x,y"; duration: 2000}
+				},
+			]
+			...
+		}
+		Transition的enabled属性设置一个Transition是否使能，默认值为true。
+		Transition的from属性用来指定触发过渡的状态(的名字)，其默认值为"*"，匹配所有状态，to属性指定过渡的目标状态(的名字)，默认值也是"*"。如果你不设置from和to属性，那么Transition就会匹配所有的状态变化，不管Item的状态从哪个变到哪个，只要Transition的enabled为true，Transition就会执行。
+			你可以通过设定from和to来控制一个Transition的触发条件，达到这样的效果：只要Item从状态"A"迁移到状态"B"时才执行Transition，通过这样的设定你就可以为Item定义多个Transition，每个Transition匹配不同的状态迁移路径。
+		如果你想知道一个Transition是否在运行，可以读取它的只读属性running，true代表Transition正在运行。
+		animations列表属性保存为一个Transition定义的所有Animation。你可以在Transition内使用基本的Animation对象，也是使用SequentialAnimation、ParallelAnimation等分组Animation对象。在介绍PropertyAnimation时讲了Animation的三种定义与使用方式，在Transition中使用就是第四种方式。
+		reversible属性指定触发transition的条件反转时Transition是否自动反转，默认值false。如果你没有将指定Transition的from和to属性，那么多个transition是并发执行的，而且会应用到所有状态变化路径上；此时不需要设置reversible属性，因为当Item的State反转时也会触发transition。但是如果你使用了SequentialAnimation或者设置了from、to属性，
+			那么在某些场景下你可能需要设置reversible属性才能达到预期的效果。比如你为一个按钮定义了一个Transition(先放大后变色)来响应鼠标左键按下这个动作，当鼠标左键释放时需要恢复按钮的状态，此时你可能想先变色在缩小，那你就要设置reversible属性。
+		当你为一个Transition定义动画时，不需要为Animation指定from和to属性。from属性默认值会被设置为Item对应属性的当前值，而to属性则会被设置为目标状态内为该属性设定的目标值。当然，要是你愿意的话，也可以手动设置它们来覆盖默认值。target属性也不用指定，结合State和Transition，target时显而易见的。
+		例子：BaseTransition.qml BaseLinkText.qml
+		
+	}
+	
+	{协同动画元素
+		处理基本的动画元素和分组动画元素，还有一些需要和其他的动画辅助类(如Behavior、Transition)或者动画类结合使用才用更有实际意义的动画元素，我把他们叫作协同动画元素，都安排到这部分来介绍。
+		Behavior对象应用于给Item的某个属性绑定默认动画。
+		ParentAnimation，AnchorAnimation通常需要和Transition、State联合使用。
+		PauseAnimation，可以插入在多个动画之间产生暂停效果。
+		PropertyAction可以插入在多个动画之间来立即改变某个属性。
+		ScriptAction用于在动画执行过程中运行一段ECMAScript脚本。
+		
+		Behavior //用于一个属性的变化
+			Behavior用来给一个property定义默认动画，当该property变化是执行该动画。一个property只能绑定一个Behavior，一个Behavior内只能有一个顶层动画(因为其animation属性的类型是Animation，而非list<Animation>)，如果你想在一个property变化是执行多个动画，
+			则可以使用ParallelAnimation或SequentialAnimation。如果你给Item定义了State，而State变化时触发了Transition，Transition要改变的property上绑定了Behavior，那么Transition会覆盖Behavior。
+			例子：BaseBehaviorAnimation.qml
+		ParentAnimation
+			ParentAnimation在改变一个Item的parent时使用，使得该Item从旧parent移动到新parent的过程更平滑。他是Animation的派生类，其newParent属性用来指定目标对象的新parent：target属性指定目标对象；via属性指定动画过程中参考的其他对象。比如要改变parent的Item，其旧父，新父都可能被别的Item遮住，此时移动过程可能是不可见，而给via设置一个Z序最大，处于顶层的Item，就可以确保动画过程可见。
+			ParentAnimation可以包含一个或多个其他的动画对象，这些动画会并发执行。如果不包含其他动画，ParentAnimation体现不出来任何效果
+			例子：BaseReparentRectAnimation.qml
+		AnchorAnimation
+			AnchorAnimation只能与Transition、AnchorChanges联合使用，不能在Behavior或其他的动画元素中使用。
+			你可以设定duration。easing及targets属性。不过与Transition结合使用，一般不必设置targets属性。
+	}
+}
+
+{Sprite	指定脚本动画
+	详细说明：SpriteSequence通过Sprite定义了一系列一帧或多帧的动画动作和显示动作
+	属性：
+		duration : int				动画持续时间
+		durationVariation : int		用于改变动画持续时间
+		frameCount : int			脚本的帧数(实际程序：感觉是结束的最后几帧循环)
+		frameDuration : int			每一帧动画的时间(实际程序：感觉是结束的最后几帧循环)
+		frameDurationVariation : int	用于改变每一帧动画的时间
+		frameHeight : int			每一帧的高度
+		frameRate : qreal			每一秒的帧率
+		frameRateVariation : qreal	用于改变每秒的帧率
+		frameSync : bool			如果值为true，动画将没有间隔
+		frameWidth : int			每一帧的宽度
+		frameX : int				第一帧的x坐标(实际程序：感觉是结束的帧的位置)
+		frameY : int				第一帧的y坐标(实际程序：感觉是结束的帧的位置)
+		name : string				脚本的名字，用于其他脚本的property
+		randomStart : bool			如果值为true，动画将随机选一帧为开始动画
+		reverse : bool				如果值为true，动画将反向播放
+		source : url				图片位置
+		to : QVariantMap			
+}
+
+{SpriteSequence 绘制一个脚本动画
+	详细说明：用于作为一系列帧存储的多个动画之间的播放和转换。
+	属性
+		currentSprite : string	当前动画脚本
+		goalSprite : string		动画应该移动到的sprite的名称。（有中间执行过程）
+		interpolate : bool		如果值为true，在sprite帧之间会发生插值，以使动画看起来更平滑。
+		running : bool			sprite是否在动画中
+		sprites : list<Sprite>	要绘制的sprite。sprite将按此项目的大小缩放。
+	方法
+		jumpTo(string sprite)	此方法使spriteSequence立即跳转到指定的sprite；（没有中间的执行过程）
+}
+
+{PropertyAction 指定在动画期间的属性改变
+	详细说明：	PropertyAction用于在动画期间的属性变化
+	属性：
+		exclude : list<Object>
+		properties : string
+		property : string
+		target : Object
+		targets : list<Object>
+		value : any
+}
+
+{AnimatedSprite
+	描述:Animatedsprite提供渲染和提供了在同一个图像文件的多个帧的动画控制。可以以固定的速度播放，以显示的帧速率，或手动推进和控制进度。
+	属性
+		currentFrame : int [当暂停时，可手动设置当前帧或者使用advance()推进一帧]
+		frameCount : int [总帧数]
+		frameDuration : int [每一帧动画的间隔，当等于或小于0时无效；如果frameRate有效，frameRate则会被用于计算该帧的持续时间；如果frameRate无效，但frameDuration有效，那么将使用frameDuration，注意：更改此参数将重新启动动画]
+		frameHeight : int [单帧高度，如果都一样则唯一的，则可忽略]
+		frameRate : qreal [每秒显示的动画帧数，当等于或小于0时无效；如果frameRate有效，frameRate则会被用于计算该帧的持续时间；如果frameRate无效，但frameDuration有效，那么将使用frameDuration，注意：更改此参数将重新启动动画]
+		frameSync : bool [如果为真，则动画将没有持续时间。每次一帧渲染到屏幕时，动画将前进一帧。这使它与绘画速度同步，而不是经过时间。如果framesync设置为true，它将重写的帧率和frameduration。默认为false。更改此参数将重新启动动画]
+		frameWidth : int [单帧宽度，如果都一样则唯一的，则可忽略]
+		frameX : int [在animatedsprite第一帧图像文件的x坐标。如果第一帧在文件左上角开始，则可以忽略]
+		frameY : int [在animatedsprite第一帧图像文件的y坐标。如果第一帧在文件左上角开始，则可以忽略]
+		interpolate : bool [如果为true，则在精灵帧之间会出现插值，使动画看起来更平滑（前一张渐隐后一张渐显）。默认为true]
+		loops : int [动画多次播放后，动画会自动停止。负值是无效的。如果设置为AnimatedSprite.Infinite，动画将会无限循环播放，且默认是无限AnimatedSprite.Infinite]
+		paused : bool [暂停时，当前帧可以手动更新，默认为false。]
+		reverse : bool [是否反向播放，默认为false]
+		running : bool [是否正在播放动画，默认为true]
+		source : url [动画地址]
+	方法
+		int advance() [前进一帧]
+		int pause() [暂停]
+		int restart() [重新播放]
+		int resume() [暂停后的恢复播放]
+}
+
+
+{dllexport
+	一般而言，动态链接库中定义有两种函数：导出函数(export function)和内部函数(internal function)。 
+	导出函数可以被其它模块调用，内部函数在定义它们的DLL程序内部使用。
+
+	在要输出的函数、类、数据的声明前加上__declspec(dllexport)的修饰符，表示输出。
+
+	有导出就有导入__declspec(dllimport)，声明某个类、函数是从dll中导入的。
+}
+
+{qRegisterMetaType的使用
+	如果是自己定义的类型如果想使用signal/slot来传递的话，则没有这么简单。直接使用的话，会产生下面这种错误：
+	QObject::connect: Cannot queue arguments of type 'TextAndNumber' (Make sure 'TextAndNumber' is registed using qRegisterMetaType().) 
+	自定一种类型，在这个类型的顶部包含：#include <QMetaType>
+
+	在类型定义完成后，加入声明：Q_DECLARE_METATYPE(TextAndNumber);
+	在main()函数中注册这种类型：qRegisterMetaType<TextAndNumber>("TextAndNumber");
+}

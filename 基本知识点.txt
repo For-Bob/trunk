@@ -1,0 +1,346 @@
+﻿{1.堆和栈的区别？
+	栈：系统管理，速度快	
+	堆：手动分配，手动释放，速度慢
+}
+2.const 和 static	
+	全局变量声明	(还可以加const变成常全局变量)
+		.h文件 int g_value
+		.cpp文件 static int g_value;
+	const说明
+		int a = 10, b = 20, c = 30;
+			const int *pOne = &a;//const int *p <==> int const *p, value is const
+			pOne = &a;
+		//	*pOne = a; 	//error
+			int* const pTwo = &b;// address is const
+			*pTwo = b;
+		//  pTwo = &b; //error
+
+			cout << "pOne: " << *pOne << " pTwo: " << *pTwo << endl;//10,20
+	
+			const int* const pThree = &c;// const int* const <==> int const* const, both of value and address are const
+		//	pThree = &c;	//error
+		//	*pThree = c;	//error
+
+2.虚析构函数的作用？
+	多态的才会调用子类的析构函数
+
+3.指针函数和函数指针的区别？指针数组和数组指针的区别？数组和指针的区别?
+	1.	指针函数：是函数	int* Fun()
+		函数指针：是指针	int  (*p)()
+	2.	指针数组：是数组	int *p[n]
+		数组指针：是指针	int (*p)[n]
+	3.	数组：连续多个相同类型的数据；只能一个一个赋值；sizeof求的是占用空间
+		变量，存的地址；指针变量可以相互赋值；灵活，任一类型的数据，指向地址；sizeof(指针名) = 4
+4.虚函数是通过什么记录的？
+	虚函数是通过虚表记录，每个虚函数对应的就是一个指针
+
+5.指针和引用的区别
+	引用必须初始化，不能为空，在赋值后不能改变，是别名 ,引用没有 const，sizeof 引用”得到的是所指向的变量（对象）的大小
+	指针则可以相反，实体,指针有 const,而“sizeof 指针”得到的是指针本身（所指向的变量或对象的版地址）的大小；
+	
+6.赋值构造函数，拷贝构造函数
+	对象不存在，且用别的对象来初始化，就是拷贝构造函数
+	（1）用类的一个对象去初始化另一个对象时
+		A a;
+		1.A b(a);
+		2.A b=a;
+	（2）当函数的形参是类的对象时（也就是值传递时），如果是引用传递则不会调用
+	（3）当函数的返回值是类的对象或引用时
+	
+	对象存在，用别的对象来给它赋值，就是赋值函数。
+	A a;
+	A b;
+	b=a; 
+7.c++的特性？
+	继承；封装；多态
+
+8.c++11的新特性？
+	智能指针，
+	lambda表达式， [函数对象] (入参) mutable 或 exception 声明 -> 返回值类型 {函数体}
+		常用：[函数对象] (入参) -> 返回值类型 {函数体}
+		mutable：值传递的，参数都是const修饰的，如果需要修改就要加mutable
+		= （表达式前面的是值传递）
+			&a（引用），
+			this（类中的所有成员），
+			a（值传递）
+			a,&b(a值传递，&b，引用传递)
+			&，a,b(a,b值传递，其他参数引用传递)
+	auto，
+	nullptr，
+	for(a: b)
+	虚函数的override和final指示符
+		override，表示函数应当重写基类中的虚函数
+		final，表示派生类不应当重写这个虚函数
+	decltype:类型获取
+		int i;
+		decltype(i) a; a也是int类型
+	constexpr	编译期来确定是常量，const只能在运行期确实是否是常量
+	function
+	bind
+	
+9.进程间通信	//参考：https://www.cnblogs.com/zgq0/p/8780893.html
+		管道pipe：管道，通常指无名管道，是 UNIX 系统IPC最古老的形式。
+			它是半双工的（即数据只能在一个方向上流动），具有固定的读端和写端。
+			它只能用于具有亲缘关系的进程之间的通信（也是父子进程或者兄弟进程之间）。
+			#include <unistd.h>
+			int pipe(int fd[2]);    // 返回值：若成功返回0，失败返回-1
+			
+		有名管道FIFO：也称为命名管道，它是一种文件类型。
+			FIFO可以在无关的进程之间交换数据，与无名管道不同。
+			FIFO有路径名与之相关联，它以一种特殊设备文件形式存在于文件系统中。
+				#include <sys/stat.h>
+				// 返回值：成功返回0，出错返回-1
+				int mkfifo(const char *pathname, mode_t mode);
+			
+		消息队列MessageQueue：消息队列，是消息的链接表，存放在内核中。一个消息队列由一个标识符（即队列ID）来标识。
+			消息队列是面向记录的，其中的消息具有特定的格式以及特定的优先级。
+			消息队列独立于发送与接收进程。进程终止时，消息队列及其内容并不会被删除。
+			消息队列可以实现消息的随机查询,消息不一定要以先进先出的次序读取,也可以按消息的类型读取。
+				#include <sys/msg.h>
+				// 创建或打开消息队列：成功返回队列ID，失败返回-1
+				int msgget(key_t key, int flag);
+				// 添加消息：成功返回0，失败返回-1
+				int msgsnd(int msqid, const void *ptr, size_t size, int flag);
+				// 读取消息：成功返回消息数据的长度，失败返回-1
+				int msgrcv(int msqid, void *ptr, size_t size, long type,int flag);
+				// 控制消息队列：成功返回0，失败返回-1
+				int msgctl(int msqid, int cmd, struct msqid_ds *buf);
+
+		共享存储：指两个或多个进程共享一个给定的存储区
+			共享内存是最快的一种 IPC，因为进程是直接对内存进行存取。
+			因为多个进程可以同时操作，所以需要进行同步。
+			信号量+共享内存通常结合在一起使用，信号量用来同步对共享内存的访问。			
+				#include <sys/shm.h>
+				// 创建或获取一个共享内存：成功返回共享内存ID，失败返回-1
+				int shmget(key_t key, size_t size, int flag);
+				// 连接共享内存到当前进程的地址空间：成功返回指向共享内存的指针，失败返回-1
+				void *shmat(int shm_id, const void *addr, int flag);
+				// 断开与共享内存的连接：成功返回0，失败返回-1
+				int shmdt(void *addr); 
+				// 控制共享内存的相关信息：成功返回0，失败返回-1
+				int shmctl(int shm_id, int cmd, struct shmid_ds *buf);
+			
+		套接字Socket：填地址通信
+
+		维度				多进程																多线程										总结
+		数据共享、同步		数据是分开的:共享复杂，需要用IPC;同步简单							多线程共享进程数据：共享简单；同步复杂		各有优势
+		内存、CPU			占用内存多，切换复杂，CPU利用率低									占用内存少，切换简单，CPU利用率高			线程占优
+		创建销毁、切换		创建销毁、切换复杂，速度慢 											创建销毁、切换简单，速度快 					线程占优 
+		编程调试			编程简单，调试简单													编程复杂，调试复杂							进程占优 
+		可靠性				进程间不会相互影响 													一个线程挂掉将导致整个进程挂掉				进程占优
+		分布式 				适应于多核、多机分布 ；如果一台机器不够，扩展到多台机器比较简单		适应于多核分布								进程占优
+
+		
+10.socket通信	//参考：https://www.cnblogs.com/wangcq/p/3520400.html
+	应用层
+	传输层	TCP UDP
+	网络层
+	链路层
+	tcp：面向连接， 流模式，数据正确，数据顺序，速度慢
+	udp：面向无连接，数据报，可能丢包，不保证，速度快
+	
+11.构造函数为什么不能是虚函数
+	从存储空间角度，虚函数对应一个指向vtable虚函数表的指针，这大家都知道，可是这个指向vtable的指针其实是存储在对象的内存空间的。问题出来了，如果构造函数是虚的，就需要通过 vtable来调用，可是对象还没有实例化，也就是内存空间还没有，怎么找vtable呢？所以构造函数不能是虚函数。
+
+12.内存分布：	栈：系统分配，
+				堆：手动分配，手动释放
+				全局存储区：全局变量和静态变量
+				常量存储区：空间存储常量（比如字符串）
+				代码去：函数体二进制代码
+
+13.malloc，free和new delete的区别
+	malloc开辟空间类型大小需手动计算，new是由编译器自己计算
+	malloc返回类型为void*,必须强制类型转换对应类型指针
+	malloc/free为函数只是开辟空间并释放，new/delete则不仅会开辟空间，并调用构造函数和析构函数进行初始化和清理
+
+14.类型转换函数
+	const_cast:去掉const属性转换	:目标类型只能是指针或者引用
+	static_cast:静态类型转换,跟C类型的强转是一致的
+	dynamic_cast: 将基类的指针或引用安全地转换成派生类的指针或引用
+	reinterpret_cast：功能比较强大，处理无关类型之间的转换
+15.select ,poll和epoll的区别
+	(1)select==>时间复杂度O(n)				它仅仅知道了，有I/O事件发生了，却并不知道是哪那几个流（可能有一个，多个，甚至全部），我们只能无差别轮询所有流，找出能读出数据，或者写入数据的流，对他们进行操作。所以select具有O(n)的无差别轮询复杂度，同时处理的流越多，无差别轮询时间就越长。
+
+	(2)poll==>时间复杂度O(n)
+	poll本质上和select没有区别，它将用户传入的数组拷贝到内核空间，然后查询每个fd对应的设备状态， 但是它没有最大连接数的限制，原因是它是基于链表来存储的.
+
+	(3)epoll==>时间复杂度O(1)
+	epoll可以理解为event poll，不同于忙轮询和无差别轮询，epoll会把哪个流发生了怎样的I/O事件通知我们。所以我们说epoll实际上是事件驱动（每个事件关联上fd）的，此时我们对这些流的操作都是有意义的。（复杂度降低到了O(1)）
+	
+16.内存泄露检查工具
+	windows：_CrtCheckMemory   
+	linux: valgrind
+
+关于浅拷贝的问题
+	如果不主动编写拷贝构造函数和赋值函数，编译器将以“位拷贝”的方式自动生成缺省拷贝构造函数和赋值函数。
+	以类String的两个对象a,b为例，假设a.m_data的内容为“hello”，b.m_data的内容为“world”。现将a赋给b，缺省赋值函数的“位拷贝”意味着执行b.m_data = a.m_data。这将造成三个错误：
+     1>b.m_data原有的内存没被释放，造成内存泄露；
+     2>b.m_data和a.m_data指向同一块内存，a或b任何一方变动都会影响另一方；
+     3>在对象被析构时，m_data被释放了两次
+	
+17.vector动态增加内存是怎么操作的
+	 由于动态增长会引起重新分配内存空间、拷贝原空间、释放原空间
+	 
+18.重载和重写的区别
+	重载：相同函数名，参数不同
+	重写(覆盖)：子类重写父类的相同函数
+19.C++ 空类，默认产生哪些成员函数
+ 默认构造函数、默认拷贝构造函数、默认析构函数、默认赋值运算符
+
+20.qml和C++的相互操作	
+	1.	QQmlContext *context1 = engine.rootContext();//获取一个QQmlContext的对象
+		context1->setContextProperty("ChangeColor",cl);//注册一个cl，对应QML的访问就是ChangeColor
+		Q_INVOKABLE void adujstPositon(int x, int y);			
+		Q_PROPERTY(bool bIsOn MEMBER mbIsOn NOTIFY proDataChanged)
+	2.	QQmlEngine::qmlRegisterType<myMaker>("an.qt.MyMaker",1, 0,
+"MyMaker");
+	
+21.connect的连接类型
+	1)自动连接(AutoConnection)，默认的连接方式，如果信号与槽，也就是发送者与接受者在同一线程，等同于直接连接；如果发送者与接受者处在不同线程，等同于队列连接。
+	2)直接连接(DirectConnection)，当信号发射时，槽函数立即直接调用。无论槽函数所属对象在哪个线程，槽函数总在发送者所在线程执行。
+	3)队列连接(QueuedConnection)，当控制权回到接受者所在线程的事件循环时，槽函数被调用。槽函数在接受者所在线程执行。
+	4)阻塞队列链接，信号线程和槽线程不能是同一线程，信号发送完就会阻塞，知道槽执行完
+	5)单一链接：就是只会触发一次，多次连接没效果。
+	实现原理:
+		A、一个信号就是一个能够被观察的事件，或者至少是事件已经发生的一种通知；
+		B、一个槽就是一个观察者，通常就是在被观察的对象发生改变的时候——也可以说是信号发出的时候——被调用的函数；
+		C、信号与槽的连接，形成一种观察者-被观察者的关系；
+		D、当事件或者状态发生改变的时候，信号就会被发出；同时，信号发出者有义务调用所有注册的对这个事件（信号）感兴趣的函数（槽）。
+
+22.Qt中QObject *parent内存释放
+	当一个 QObject 对象在堆上创建的时候，Qt 会同时为其创建一个对象树。不过，对象树中对象的顺序是没有定义的。这意味着，销毁这些对象的顺序也是未定义的。Qt 保证的是，任何对象树中的 QObject 对象 delete 的时候，如果这个对象有 parent，则自动将其从 parent 的 children() 列表中删除；如果有孩子，则自动 delete 每一个孩子。Qt 保证没有 QObject 会被 delete 两次，这是由析构顺序决定的。
+	如果中途把这个孩子对象直接delete就会出问题,用deleteLater就不会用问题.
+
+23.QApplication作用：
+	处理过和发送过的主事件循环，它也处理应用程序的初始化和收尾工作，并提供对话管理。
+	对于用Qt写的任何一个GUI应用，不管这个应用有没有窗口或多少个窗口，有且只有一个QApplication对象.
+24.QT核心
+	https://blog.csdn.net/light_in_dark/article/details/64125085
+25.元对象系统:
+	元对象系统是一个基于标准C++的扩展，为Qt提供了1、信号与槽机制2、实时类型信息3、动态属性系统。
+	元对象系统在Qt中主要有以下三部分构成：QObject类,Q_OBJECT宏和元对象编译器moc。 
+	1.元对象系统机制
+		元对象系统是一个基于标准C++的扩展，为Qt提供了1、信号与槽机制2、实时类型信息3、动态属性系统。 
+		一.QObject类：很多Qt类都是由它继承而来;
+			1.它是对象模型的核心，信号与槽是基于对象模型的;
+			2.对象的组织方式以树形结构的。函数体现在QObject::setParent()、QObject::findChild()、QObject::findChilren()
+			3.每一个对象都有一个独立的名字，并且可以查出该对象的继承关系。
+			4.对象在销毁时会发出一个信号
+			5.添加安装事件过滤器。
+		二.Q_OBJECT简单理解就是一些宏定义代码，就是你们自己定义的一些类、类的信号、槽函数、（Qml混合编程的属性、自己注册的Qt数据类型等）这么多属性
+		三.moc（Meta-Object-Compiler）元对象编译器
+			signals、slots关键字并不是标准C++里面的东西，代码最后要交给C++编译器，那么就需要把这部分转化成C++编译器认识的东西，这个工作就是moc来完成了。
+			moc过程是发生在预编译之前的，简单说就是moc之后每一个包含Q_OBJECT宏头文件，都会根据该头文件里面的signals、slots、Q_MENU l来生成以moc_XXXX(自定义类名)的.cpp文件
+	元对象系统除了提供信号与槽,我们常用的国际化QObject::tr()、qsTr()还有常用的QObject::setProperty()、QObject::property()。
+	
+26.国际化
+	被翻译的字符要加tr()
+	第二步，更改项目文件
+	pro文件添加:TRANSLATIONS = myI18N_zh_CN.ts 要在项目文件中指定生成的.ts文件，每一种翻译语言对应一个.ts文件
+	1.qt creator 工具->外部->Qt语言家->更新翻译(lupdate)，生成对应的ts文件
+	2.使用Qt Linguist打开要翻译的ts文件，对翻译源进行相应语言的翻译。
+	3.接着 使用Qt Linguist文件->发布，就会生成对应的qm文件。
+27.QSS
+	它是Qt提供的一种用来自定义控件外观的机制:跟CSS差不多,只不过QSS的功能比CSS要弱很多.
+	qss的属性特别多，但是说实话，我觉得常用的qss就几个属性：
+		background-color:设置元素的背景颜色; background-image:设置元素的背景图像;
+		color:设置字体颜色;		border:设置边框属性;
+		font-family:规定文本的字体系列;		font-size:规定文本的字体尺寸;
+
+28. MVC
+	model:数据
+	view：视图，显示
+	controller：用于数据与显示之前的通信，以及显示的样式控制
+	
+29.QGraphicsView实现了模型-视图结构的图形管理，QPainter采用面向过程的描述方式绘图；GraphicsView采用面向对象的描述方式绘图
+	GraphicsView：提供一个可视的窗口，用于显示场景中的图元，一个场景中可以有多个视图
+	QGraphicsScene：提供图元的操作接口、传递事件和管理各个图元状态
+	QGraphicsItem：是场景中各个图元的基础类，QT提供了常用图形图元的标准类，如矩形(QGraphicsRectItem)、椭（QGraphicsEllipseItem)、文本(QGraphicsTextItem)。
+	
+30.QThread两种使用方法
+	1.Mythread继承Qthread，重写run，start启动run方法
+	2.MyClass继承QObject，槽函数 void mySlots();
+		Qthread thread
+	this->movetoThread(&thread)
+	connect(&thread, &Qthread::started, this, &MyClass::mySlots);
+	thread.start()
+	---下面的两行一般都是析构函数执行
+	thread.quit();
+	thread.wait();
+	
+31.隐式转换
+	C++隐式转换发生在四种情况下
+
+	* 在混合类型的算术表达式中
+	int ival = 3;  
+	double dval = 3.1415  
+	ival + dval; //ival 被提升为double 类型:3.0 
+	
+	* 用一种类型的表达式赋值
+	int *pi = NULL; // NULL(0)被转换成了int* 类型的空指针值 
+	
+	* 用一个表达式传递给一个函数调用
+	extern double sqrt(double);  
+	sqrt(2); //2被提升为double类型: 2.0 
+	
+	* 从一个函数返回一个表达式
+	double difference(int ival1, int ival2)  
+	{  
+	return ival1 - ival2; //返回值被提升为double 类型.  
+	} 
+
+32.智能指针
+	智能指针是一个类，这个类的构造函数中传入一个普通指针，析构函数中释放传入的指针。智能指针的类都是栈上的对象，所以当函数（或程序）结束时会自动被释放。
+	1）std::auto_ptr，有很多问题。 不支持复制（拷贝构造函数）和赋值（operator =），但复制或赋值的时候不会提示出错。因为不能被复制，所以不能被放入容器中。
+
+	2) C++11引入的unique_ptr， 也不支持复制和赋值，但比auto_ptr好，直接赋值会编译出错。实在想赋值的话，需要使用：std::move。
+	
+	3) C++11或boost的shared_ptr，基于引用计数的智能指针。可随意赋值，直到内存的引用计数为0的时候这个内存会被释放。
+
+	4）C++11或boost的weak_ptr，弱引用。 引用计数有一个问题就是互相引用形成环，这样两个指针指向的内存都无法释放。需要手动打破循环引用或使用weak_ptr。顾名思义，weak_ptr是一个弱引用，只引用，不计数。如果一块内存被shared_ptr和weak_ptr同时引用，当所有shared_ptr析构了之后，不管还有没有weak_ptr引用该内存，内存也会被释放。所以weak_ptr不保证它指向的内存一定是有效的，在使用之前需要检查weak_ptr是否为空指针。
+	
+	引用计数的智能指针的实现，需要实现构造(+1)，析构(-1,直到count==0，就删除)，拷贝构造(+1)，
+
+33.C++与QT的区别
+	QT在C++对象模型的基础上添加了一些特性，这些特性有：
+	1.信号与槽
+	2.事件与事件过滤器
+	3.字符翻译机制
+	4.对象树
+	5.定时器
+	6.属性系统（Q_PROPERTY）QML属性
+34.动态库和静态库区别
+	静态库在程序编译时会被连接到目标代码中，程序运行时不再需要静态库；而动态库在程序编译时，不会放到连接的目标代码中，而是在程序运行时被载入，因此在程序运行时还需要动态库的存在。
+35.QTextStream和QDataStream的区别
+	QTextStream和QDataStream都是面向数据流的
+	QTextStream 侧重于向QIODevice文本读写,这里所说的文本指的是普通的简单的
+	QDataStream则是侧重于数据格式和类型。QDataStream数据流不仅可以操作QTextStream所能处理的普通文本，而且可以对特定格式的类型数据进行完美的输入与输出。
+36.运行时多态与编译时多态
+	运行时多态就是虚函数，编译时多态就是template
+	 
+	class Animal{
+	public :
+		void shout() { cout << "发出动物的叫声" << endl; };
+	};
+	class Dog{
+	public:
+		 void shout(){ cout << "汪汪！"<<endl; }
+	};
+	class Cat{
+	public:
+		 void shout(){ cout << "喵喵~"<<endl; }
+	};
+
+	template <typename T>
+	void  animalShout(T & t)	{
+		t.shout();
+	}
+	int main()	{
+		Animal anim;
+		Dog dog;
+		Cat cat;
+	 
+		animalShout(anim);
+		animalShout(dog);
+		animalShout(cat);
+	}

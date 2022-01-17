@@ -1,0 +1,82 @@
+
+{Canvas （画布）
+	Canvas{
+		width:320
+		height:240
+	}
+	
+	{画师 Context2D
+		Canvas{
+			onPaint:{
+				var ctx = getContext("2d");
+			}
+		}
+	}
+	{画刷	
+		在Context2D这里，fillStyle属性就是描述画刷的。
+	}
+	
+	坐标系：x，y坐标
+	
+	{绘制路径
+		1.调用beginPath();
+		2.调用moveTo(),lineTo(),arcTo(),rect(),quadraticCurveTo(),arc(),bezierCurveTo()等可以构造路径元素的方法。
+		3.调用fill()或stroke()。
+			调用fill()方法使用fillStyle保存的颜色来填充矩形，调用stroke()方法结束路径的绘制病使用strokeStyle保存的颜色描画路径的边线。
+		context2D的lienWidth属性，用来设置画笔的宽度。
+		fillStyle与Qt C++中的QBrush类似，保存用于填充图元的画刷。他可以是一个颜色值 ，也可以是CanvasGradient或CanvasPattern对象。
+		Context2D的createLinearGradient()方法用于创建一个线性渐变对象，createRadialGradient()方法可以创建一个放射渐变对象(类型为Context2D的createGradient)
+		createGradient对象的addColorStop()可以添加渐变路径上的关键点颜色。
+		
+		moveTo()方法可以移动到某个点，以这个点为起点开始一个新路径。
+		closePath()方法用于结束当前的路径，从路径终点到起点绘制一道题直线来封闭路径。
+		fill()方法根据fillStyle填充了三角形，stroke()则完成了描绘边框的工作。
+		绘制：二次方贝塞尔曲线quadraticCurveTo(),三次方贝塞尔曲线ezierCurveTo()，弧线(arc(),arcTo()),椭圆(ellipse())，文字(text())
+	}
+	
+	{绘制文本
+		fillText()，strokeText()，text()。
+		fillText()使用fillStyle填充文字。
+		strokeText()方法使用strokeStyle描画文字边框。
+		textstrokeText()方法在路径上调价一串文本作为构成路径的元素之一。
+		
+		cont2D的font属性，
+			font-style(可选),可以取normal，italic，oblique三值之一
+			font-variant(可选),可以取normal，small-caps二值之一
+			font-weight(可选),可以取normal，bold二值之一，或0~99的数字。
+			font-size,取Npx或Npt，其中N为数字，px代表像素，pt代表点，对于移动设备，使用pt为单位更合适一些。
+			font-family，常见的有serif,sans-serif,cursive,fantasy,monispace。
+	}
+	
+	{绘制图片
+		Context2D有三个不同形式的drawImage()方法，可以用来绘制图片。
+		
+		drawImage(variant image, real dx, real dy, real dw, real dh)//dx,dy是坐标轴，dw，dh//宽和高
+		drawImage(variant image,real dx,real dy)方法是最简的一个，它在dx，dy位置绘制指定的image对象代表的图片，可以是一个Image元素，一个图片URL，或者一个CnavasImageData对象。
+		在Component.onCompleted附加信号处理器内调用Canvas的loadImage()方法来加载图片，该方法会异步加载图片，当图片加载完成时，发射iamgeLoaded信号，
+			在对应的信号处理器onImageLoaded内调用requestPaint()方法来重绘Canvas。
+	}
+	
+	{变换	
+		就像QPainter一样，Context2D也支持平移(translate())，旋转(rotate())，缩放(scale())，错切(shear())等图形变换，它还支持简单的矩形变换(setTransform()).
+		//object shear(real sh, real sv)
+		//在水平方向上用sh,在垂直方向上用sv剪切转换矩阵
+		//Shears the transformation matrix by sh in the horizontal direction and sv in the vertical direction.
+
+
+		//object setTransform(real a, real b, real c, real d, real e, real f)
+		//a is the scale factor in the horizontal (x) direction
+		//a是水平（x）方向的比例因子
+		//c is the skew factor in the x direction
+		//c是x方向上的斜因子
+		//e is the translation in the x direction
+		//e是x方向上的平移
+		//b is the skew factor in the y (vertical) direction
+		//b是y（垂直）方向上的斜因子
+		//d is the scale factor in the y direction
+		//d是y方向上的比例因子
+		//f is the translation in the y direction
+		//f是y方向上的平移
+		
+	}
+}

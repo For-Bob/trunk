@@ -1,0 +1,50 @@
+
+{Canvas （画布）
+	Canvas{
+		width:320
+		height:240
+	}
+	
+	{画师 Context2D
+		Canvas{
+			onPaint:{
+				var ctx = getContext("2d");
+			}
+		}
+	}
+	{画刷	
+		在Context2D这里，fillStyle属性就是描述画刷的。
+	}
+	
+	坐标系：x，y坐标
+	
+	{绘制路径
+		1.调用beginPath();
+		2.调用moveTo(),lineTo(),arcTo(),rect(),quadraticCurveTo(),arc(),bezierCurveTo()等可以构造路径元素的方法。
+		3.调用fill()或stroke()。
+			调用fill()方法使用fillStyle保存的颜色来填充矩形，调用stroke()方法结束路径的绘制病使用strokeStyle保存的颜色描画路径的边线。
+		context2D的lienWidth属性，用来设置画笔的宽度。
+		fillStyle与Qt C++中的QBrush类似，保存用于填充图元的画刷。他可以是一个颜色值 ，也可以是CanvasGradient或CanvasPattern对象。
+		Context2D的createLinearGradient()方法用于创建一个线性渐变对象，createRadialGradient()方法可以创建一个放射渐变对象(类型为Context2D的createGradient)
+		createGradient对象的addColorStop()可以添加渐变路径上的关键点颜色。
+		
+		moveTo()方法可以移动到某个点，以这个点为起点开始一个新路径。
+		closePath()方法用于结束当前的路径，从路径终点到起点绘制一道题直线来封闭路径。
+		fill()方法根据fillStyle填充了三角形，stroke()则完成了描绘边框的工作。
+		绘制：二次方贝塞尔曲线quadraticCurveTo(),三次方贝塞尔曲线ezierCurveTo()，弧线(arc(),arcTo()),椭圆(ellipse())，文字(text())
+	}
+	
+	{绘制文本
+		fillText()，strokeText()，text()。
+		fillText()使用fillStyle填充文字。
+		strokeText()方法使用strokeStyle描画文字边框。
+		textstrokeText()方法在路径上调价一串文本作为构成路径的元素之一。
+		
+		cont2D的font属性，
+			font-style(可选),可以取normal，italic，oblique三值之一
+			font-variant(可选),可以取normal，small-caps二值之一
+			font-weight(可选),可以取normal，bold二值之一，或0~99的数字。
+			font-size,取Npx或Npt，其中N为数字，px代表像素，pt代表点，对于移动设备，使用pt为单位更合适一些。
+			font-family，常见的有serif,sans-serif,cursive,fantasy,monispace。
+	}
+}

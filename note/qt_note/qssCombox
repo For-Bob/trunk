@@ -1,0 +1,44 @@
+QComboBox
+{
+	border-radius: 4px;<--!边框圆角4-->
+	border:1px solid rgb(220,223,230);
+	<--!边框宽带1， solid：边框为实线(dashed:虚线;double:双线;groove:3D凹槽;ridge:3D 垄状;inset:3D inset 边框;outset:3D outset 边框)，边框颜色：rgb(220,223,230)-->
+	background:rgb(243,243,243);<--!背景色为rgb(220,223,230)-->
+	padding:0px 0px  0px  0px ;<--!内边距-->
+}
+QComboBox:hover<--!鼠标悬停到控件上面的效果-->
+{
+	border-radius: 4px;
+	border:1px solid #7cbceb;
+	background:rgb(243,243,243);
+	color:rgb(47,40,50);			<--!字体颜色-->
+	padding:0px  0px  0px  2px ;
+}
+QComboBox QAbstractItemView<--!QAbstractItemView这个是用于代码来添加model来指定model的样式-->
+{
+	border-width:0px 5px 10px 5px;
+	border-image:url(%s)  0 5 10 6;//上 0， 右 5， 下： 10，左： 6
+	padding-top:5px;
+	padding-left:5px ;
+	padding-right:5px;
+	padding-bottom:5px;
+	font:15px "Microsoft YaHei";
+	outline:0px;
+}
+QComboBox:drop-down<--!下拉箭头-->
+{
+	image:url(down_icon.png);<--!下拉箭头用自己定义的图片代替-->
+	<--!一般不要使用这里的资源图片，否则下拉出来图标是重叠在一起的-->
+}
+QComboBox:down-arrow:closed<--!下拉箭头关闭的时候-->
+{
+	image:url(down_icon.png);<--!下拉箭头用自己定义的图片代替-->
+	background-position: center;<--!居中-->
+}
+QComboBox:down-arrow:open<--!下拉箭头开启的时候-->
+{
+	image:url(down_icon.png);<--!上拉箭头用自己定义的图片代替-->
+	background-position: center;<--!居中-->
+}
+
+
